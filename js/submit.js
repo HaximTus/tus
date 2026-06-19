@@ -85,7 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function checkForm() {
         const subject = document.getElementById('paperSubject').value || document.getElementById('paperSubjectOther').value.trim();
         const title = document.getElementById('paperTitle').value.trim();
-        submitBtn.disabled = !(subject && title && selectedFile);
+        const grade = document.getElementById('paperGrade').value;
+        submitBtn.disabled = !(subject && title && grade && selectedFile);
     }
 
     document.querySelectorAll('#submitForm input, #submitForm select').forEach(el => {
@@ -99,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const subject = document.getElementById('paperSubject').value || document.getElementById('paperSubjectOther').value.trim();
         const title = document.getElementById('paperTitle').value.trim();
+        const grade = document.getElementById('paperGrade').value;
         const year = document.getElementById('paperYear').value;
         const semester = document.getElementById('paperSemester').value;
         const teacher = document.getElementById('paperTeacher').value.trim();
@@ -110,8 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('progressOverlay').classList.remove('hidden');
 
         // 构建 Issue 标题和内容（URL 编码）
-        const issueTitle = `[新试卷] ${title}（${subject}·${semester}）`;
-        const issueBody = buildIssueBody(subject, title, year, semester, teacher, uploader, selectedFile.name);
+        const issueTitle = `[新试卷] ${title}（${subject}·${grade}·${semester}）`;
+        const issueBody = buildIssueBody(subject, title, grade, year, semester, teacher, uploader, selectedFile.name);
 
         // 打开 GitHub Issues 页面（预填信息）
         const githubUrl = `https://github.com/tjiux/tus/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
@@ -126,12 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ========== 构建 Issue 内容 ==========
-function buildIssueBody(subject, title, year, semester, teacher, uploader, pdfName) {
+function buildIssueBody(subject, title, grade, year, semester, teacher, uploader, pdfName) {
     let body = `### 📋 试卷信息\n\n`;
     body += `| 项目 | 内容 |\n`;
     body += `|------|------|\n`;
     body += `| **科目** | ${subject} |\n`;
     body += `| **标题** | ${title} |\n`;
+    body += `| **年级** | ${grade} |\n`;
     body += `| **年份** | ${year} |\n`;
     body += `| **学期** | ${semester} |\n`;
     if (teacher) body += `| **教师** | ${teacher} |\n`;
