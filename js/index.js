@@ -7,8 +7,50 @@ document.addEventListener('DOMContentLoaded', async function() {
     const errorState = document.getElementById('errorState');
     const errorMessage = document.getElementById('errorMessage');
     const searchInput = document.getElementById('searchInput');
+    const gradeBtns = document.querySelectorAll('.grade-btn');
 
     let allSubjects = [];
+    let activeGrade = '';
+
+    // 年级筛选点击
+    gradeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            gradeBtns.forEach(b => {
+                b.className = 'grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors ' +
+                    (b === this
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50');
+            });
+            activeGrade = this.dataset.grade;
+            applyFilters();
+        });
+    });
+
+    function applyFilters() {
+        const keyword = searchInput.value.toLowerCase().trim();
+
+        let filtered = allSubjects;
+
+        // 年级筛选
+        if (activeGrade) {
+            filtered = filtered.filter(s => s.grade === activeGrade);
+        }
+
+        // 关键词搜索
+        if (keyword) {
+            filtered = filtered.filter(s =>
+                s.name.toLowerCase().includes(keyword) ||
+                (s.teacher && s.teacher.toLowerCase().includes(keyword)) ||
+                (s.description && s.description.toLowerCase().includes(keyword)) ||
+                (s.grade && s.grade.includes(keyword))
+            );
+        }
+
+        renderSubjects(filtered);
+    }
+
+    // 搜索过滤
+    searchInput.addEventListener('input', applyFilters);
 
     // 加载科目
     async function loadSubjects() {
@@ -28,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            renderSubjects(subjects);
+            applyFilters();
         } catch (e) {
             loadingState.classList.add('hidden');
             errorState.classList.remove('hidden');
@@ -65,22 +107,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             `;
         }).join('');
     }
-
-    // 搜索过滤
-    searchInput.addEventListener('input', function() {
-        const keyword = this.value.toLowerCase().trim();
-        if (!keyword) {
-            renderSubjects(allSubjects);
-            return;
-        }
-        const filtered = allSubjects.filter(s =>
-            s.name.toLowerCase().includes(keyword) ||
-            (s.teacher && s.teacher.toLowerCase().includes(keyword)) ||
-            (s.description && s.description.toLowerCase().includes(keyword)) ||
-            (s.grade && s.grade.includes(keyword))
-        );
-        renderSubjects(filtered);
-    });
 
     // 初始化
     await loadSubjects();
