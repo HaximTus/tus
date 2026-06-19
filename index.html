@@ -7,71 +7,70 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-stone-50 min-h-screen">
     <!-- 导航栏 -->
-    <nav class="bg-white shadow-sm border-b">
+    <nav class="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="." class="text-2xl font-bold text-blue-600">Tus</a>
-            <div class="flex gap-3">
-                <a href="submit.html" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 text-sm">提交试卷</a>
-                <a href="create-subject.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">+ 新建科目</a>
-                <a href="upload.html" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">管理员上传</a>
+            <a href="." class="text-2xl font-bold text-slate-800 tracking-tight">Tus</a>
+            <div class="flex gap-2">
+                <a href="submit.html" class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 text-sm font-medium transition-colors">提交试卷</a>
+                <a href="create-subject.html" class="bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium transition-colors">+ 新建科目</a>
             </div>
         </div>
     </nav>
 
     <!-- 主内容 -->
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main class="max-w-6xl mx-auto px-4 py-10">
         <!-- 标题 -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">📚 北工大试卷共享库</h1>
-            <p class="text-gray-500 mt-2">北京工业大学 · 历年期中期末试题 · 同学们一起努力</p>
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-slate-800 tracking-tight">📚 北工大试卷共享库</h1>
+            <p class="text-slate-400 mt-2">北京工业大学 · 历年期中期末试题</p>
         </div>
 
         <!-- 搜索 -->
-        <div class="mb-4">
-            <input type="text" id="searchInput" placeholder="搜索科目..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <div class="mb-4 max-w-xl mx-auto">
+            <input type="text" id="searchInput" placeholder="搜索科目..." class="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700 placeholder:text-slate-400">
         </div>
 
         <!-- 年级筛选 -->
-        <div class="mb-6 flex flex-wrap gap-2" id="gradeFilter">
-            <button data-grade="" class="grade-btn active px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-blue-600 text-white border-blue-600">全部</button>
-            <button data-grade="大一" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大一</button>
-            <button data-grade="大二" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大二</button>
-            <button data-grade="大三" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大三</button>
-            <button data-grade="大四" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大四</button>
+        <div class="mb-8 flex flex-wrap gap-2 justify-center" id="gradeFilter">
+            <button data-grade="" class="grade-btn active px-5 py-2 rounded-full text-sm font-medium border transition-all bg-slate-800 text-white border-slate-800 shadow-sm">全部</button>
+            <button data-grade="大一" class="grade-btn px-5 py-2 rounded-full text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-700 shadow-sm">🎓 大一</button>
+            <button data-grade="大二" class="grade-btn px-5 py-2 rounded-full text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-700 shadow-sm">🎓 大二</button>
+            <button data-grade="大三" class="grade-btn px-5 py-2 rounded-full text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-700 shadow-sm">🎓 大三</button>
+            <button data-grade="大四" class="grade-btn px-5 py-2 rounded-full text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-700 shadow-sm">🎓 大四</button>
         </div>
 
         <!-- 科目网格 -->
-        <div id="subjectsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div id="subjectsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             <!-- 由 JS 动态渲染 -->
         </div>
 
         <!-- 加载状态 -->
         <div id="loadingState" class="text-center py-20">
-            <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p class="text-gray-400">加载中...</p>
+            <div class="animate-spin h-8 w-8 border-2 border-slate-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-slate-400 text-sm">加载中...</p>
         </div>
 
         <!-- 空状态 -->
         <div id="emptyState" class="text-center py-20 hidden">
-            <div class="text-6xl mb-4">📭</div>
-            <p class="text-gray-500 text-lg">还没有科目</p>
-            <p class="text-gray-400 mt-2">点击右上角「新建科目」开始吧！</p>
+            <div class="text-5xl mb-4 opacity-60">📭</div>
+            <p class="text-slate-500 text-lg">还没有科目</p>
+            <p class="text-slate-400 mt-2 text-sm">点击右上角「新建科目」开始吧！</p>
         </div>
 
         <!-- 错误状态 -->
         <div id="errorState" class="text-center py-20 hidden">
-            <div class="text-6xl mb-4">😵</div>
+            <div class="text-5xl mb-4 opacity-60">😵</div>
             <p class="text-red-500 text-lg">加载失败</p>
-            <p class="text-gray-400 mt-2" id="errorMessage">请检查网络连接后刷新页面</p>
-            <button onclick="location.reload()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">刷新重试</button>
+            <p class="text-slate-400 mt-2 text-sm" id="errorMessage">请检查网络连接后刷新页面</p>
+            <button onclick="location.reload()" class="mt-4 bg-slate-700 text-white px-6 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm">刷新重试</button>
         </div>
     </main>
 
     <!-- 页脚 -->
-    <footer class="text-center py-6 text-gray-400 text-sm">
-        <p>Tus - 北京工业大学试卷共享平台</p>
+    <footer class="text-center py-8 text-slate-400 text-xs">
+        <p>Tus · 北京工业大学试卷共享平台</p>
     </footer>
 
     <script src="js/api-client.js"></script>
