@@ -3,14 +3,13 @@
  *
  * 提交方式：
  * 1. 用户填写试卷信息表单
- * 2. 点击提交后打开 GitHub Issues 页面（信息已预填）
- * 3. 用户把 PDF 拖拽到 Issue 中（GitHub 自动托管文件）
- * 4. 管理员在 GitHub Issues 页面审核处理
- *
- * 无需嵌入任何 Token，安全可靠！
+ * 2. 科目支持搜索选择已有科目，或直接输入新科目名
+ * 3. 点击提交后打开 GitHub Issues 页面（信息已预填）
+ * 4. 用户把 PDF 拖拽到 Issue 中（GitHub 自动托管文件）
+ * 5. 管理员在 GitHub Issues 页面审核处理，新科目自动创建
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // 填充年份
     const yearSelect = document.getElementById('paperYear');
     const currentYear = new Date().getFullYear();
@@ -21,6 +20,93 @@ document.addEventListener('DOMContentLoaded', function() {
         yearSelect.appendChild(opt);
     }
     yearSelect.value = currentYear;
+
+    // ========== 可搜索科目下拉框 ==========
+    const subjectInput = document.getElementById('subjectSearch');
+    const subjectDropdown = document.getElementById('subjectDropdown');
+    const subjectHidden = document.getElementById('subjectHidden');
+    const dropdownItems = document.getElementById('dropdownItems');
+
+    let allSubjects = [];
+    let selectedSubject = '';
+
+    // 加载已有科目
+    try {
+        allSubjects = await getSubjects();
+    } catch (e) {
+        console.warn('加载科目失败:', e);
+    }
+
+    // 显示下拉选项
+    function renderDropdown(filter) {
+        const filtered = filter
+            ? allSubjects.filter(s => charMatch(s.name, filter))
+            : allSubjects;
+
+        if (filtered.length === 0) {
+            dropdownItems.innerHTML = `
+                <div class="px-4 py-3 text-sm text-slate-400 italic">
+                    将使用新科目: "${filter}"
+                </div>`;
+            return;
+        }
+
+        dropdownItems.innerHTML = filtered.map(s => {
+            const gradeTag = s.grade ? `<span class="text-xs text-slate-400 ml-2">${s.grade}</span>` : '';
+            return `<button type="button" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition-colors flex items-center justify-between subject-option" data-name="${s.name}">
+                ${s.name}${gradeTag}
+            </button>`;
+        }).join('');
+
+        // 点击选项选中
+        dropdownItems.querySelectorAll('.subject-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedSubject = btn.dataset.name;
+                subjectInput.value = selectedSubject;
+                subjectHidden.value = selectedSubject;
+                subjectDropdown.classList.add('hidden');
+                checkForm();
+            });
+        });
+    }
+
+    // 输入时筛选
+    subjectInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (!val) {
+            selectedSubject = '';
+            subjectHidden.value = '';
+            subjectDropdown.classList.remove('hidden');
+            renderDropdown('');
+            checkForm();
+            return;
+        }
+
+        // 检查是否匹配已有科目
+        const exactMatch = charMatch(val, val) && allSubjects.some(s => charMatch(s.name, val));
+        if (allSubjects.some(s => s.name === val)) {
+            selectedSubject = val;
+            subjectHidden.value = val;
+        } else {
+            selectedSubject = val;  // 新科目名
+            subjectHidden.value = val;
+        }
+
+        subjectDropdown.classList.remove('hidden');
+        renderDropdown(val);
+        checkForm();
+    });
+
+    // 失去焦点时隐藏下拉
+    subjectInput.addEventListener('blur', () => {
+        setTimeout(() => subjectDropdown.classList.add('hidden'), 200);
+    });
+
+    // 获得焦点时显示下拉
+    subjectInput.addEventListener('focus', function() {
+        subjectDropdown.classList.remove('hidden');
+        renderDropdown(this.value.trim());
+    });
 
     // ========== 文件上传处理 ==========
     const fileInput = document.getElementById('fileInput');
@@ -83,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
 
     function checkForm() {
-        const subject = document.getElementById('paperSubject').value || document.getElementById('paperSubjectOther').value.trim();
+        const subject = subjectHidden.value.trim();
         const title = document.getElementById('paperTitle').value.trim();
         const grade = document.getElementById('paperGrade').value;
         submitBtn.disabled = !(subject && title && grade && selectedFile);
@@ -98,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const subject = document.getElementById('paperSubject').value || document.getElementById('paperSubjectOther').value.trim();
+        const subject = subjectHidden.value.trim();
         const title = document.getElementById('paperTitle').value.trim();
         const grade = document.getElementById('paperGrade').value;
         const year = document.getElementById('paperYear').value;
@@ -111,14 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('progressText').textContent = '正在跳转到 GitHub...';
         document.getElementById('progressOverlay').classList.remove('hidden');
 
-        // 构建 Issue 标题和内容（URL 编码）
+        // 构建 Issue 标题和内容
         const issueTitle = `[新试卷] ${title}（${subject}·${grade}·${semester}）`;
         const issueBody = buildIssueBody(subject, title, grade, year, semester, teacher, uploader, selectedFile.name);
 
         // 打开 GitHub Issues 页面（预填信息）
         const githubUrl = `https://github.com/tjiux/tus/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
 
-        // 延迟一下让用户看到提示
         setTimeout(() => {
             window.open(githubUrl, '_blank');
             document.getElementById('progressOverlay').classList.add('hidden');
@@ -151,15 +236,13 @@ function buildIssueBody(subject, title, grade, year, semester, teacher, uploader
 function showSuccessHint() {
     const modal = document.getElementById('successModal');
     modal.classList.remove('hidden');
-
-    // 修改成功弹窗的文字（因为不是真正的提交成功）
     document.querySelector('#successModal h3').textContent = '请完成最后一步！';
-    document.querySelector('#successModal .text-gray-500').innerHTML =
+    document.querySelector('#successModal .text-slate-500').innerHTML =
         '页面已打开，请：<br>' +
         '1️⃣ 检查预填的信息是否正确<br>' +
         '2️⃣ 将 PDF 文件拖拽到页面中<br>' +
         '3️⃣ 点击「Submit new issue」提交';
-    document.querySelector('#successModal .text-gray-400').textContent = '管理员审核后会尽快上线';
+    document.querySelector('#successModal .text-slate-400').textContent = '管理员审核后会尽快上线';
 }
 
 function formatSize(bytes) {
