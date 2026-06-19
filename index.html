@@ -29,8 +29,17 @@
         </div>
 
         <!-- 搜索 -->
-        <div class="mb-6">
+        <div class="mb-4">
             <input type="text" id="searchInput" placeholder="搜索科目..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+
+        <!-- 年级筛选 -->
+        <div class="mb-6 flex flex-wrap gap-2" id="gradeFilter">
+            <button data-grade="" class="grade-btn active px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-blue-600 text-white border-blue-600">全部</button>
+            <button data-grade="大一" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大一</button>
+            <button data-grade="大二" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大二</button>
+            <button data-grade="大三" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大三</button>
+            <button data-grade="大四" class="grade-btn px-4 py-2 rounded-lg text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:bg-gray-50">🎓 大四</button>
         </div>
 
         <!-- 科目网格 -->
