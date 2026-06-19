@@ -36,13 +36,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             filtered = filtered.filter(s => s.grade === activeGrade);
         }
 
-        // 关键词搜索
+        // 关键词搜索（按字匹配）
         if (keyword) {
             filtered = filtered.filter(s =>
-                s.name.toLowerCase().includes(keyword) ||
-                (s.teacher && s.teacher.toLowerCase().includes(keyword)) ||
-                (s.description && s.description.toLowerCase().includes(keyword)) ||
-                (s.grade && s.grade.includes(keyword))
+                charMatch(s.name, keyword) ||
+                charMatch(s.teacher || '', keyword) ||
+                charMatch(s.description || '', keyword) ||
+                charMatch(s.grade || '', keyword)
             );
         }
 
