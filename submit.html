@@ -8,39 +8,39 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/announcement.css">
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-stone-50 min-h-screen">
+<body class="bg-gradient-to-br from-stone-100 to-amber-50/60 min-h-screen">
     <!-- 导航栏 -->
-    <nav class="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40">
+    <nav class="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="." class="text-2xl font-bold text-slate-800 tracking-tight">Tus</a>
+            <a href="." class="text-2xl font-bold text-stone-800 tracking-tight">Tus</a>
             <div class="flex gap-2">
-                <span class="nav-announcement" id="navAnnouncement">📜 公告</span>
+                <span class="nav-announcement" id="navAnnouncement">公告</span>
         </div>
     </nav>
 
     <main class="max-w-2xl mx-auto px-4 py-10">
-        <h1 class="text-3xl font-bold text-slate-800 mb-2">📤 提交试卷</h1>
-        <p class="text-slate-400 mb-8">分享你手中的试题，帮助同学们一起备考！提交后管理员会审核上线。</p>
+        <h1 class="text-3xl font-bold text-stone-800 mb-2">提交试卷</h1>
+        <p class="text-stone-400 mb-8">分享你手中的试题，帮助同学们一起备考！提交后管理员会审核上线。</p>
 
-        <form id="submitForm" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 space-y-5">
+        <form id="submitForm" class="bg-white rounded-2xl shadow-sm border border-stone-100 p-8 space-y-5">
             <!-- 科目（搜索选择 + 输入新科目） -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">所属科目 *</label>
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">所属科目 *</label>
                 <div class="relative">
                     <input type="text" id="subjectSearch" autocomplete="off" placeholder="搜索已有科目，或直接输入新科目名称..."
-                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700 placeholder:text-slate-400">
+                        class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 placeholder:text-stone-400">
                     <input type="hidden" id="subjectHidden">
-                    <div id="subjectDropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    <div id="subjectDropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                         <div id="dropdownItems" class="py-1"></div>
                     </div>
                 </div>
-                <p class="text-xs text-slate-400 mt-1.5">打字搜索已有科目，或直接输入新科目名称</p>
+                <p class="text-xs text-stone-400 mt-1.5">打字搜索已有科目，或直接输入新科目名称</p>
             </div>
 
             <!-- 年级 -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">适用年级 *</label>
-                <select id="paperGrade" required class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700">
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">适用年级 *</label>
+                <select id="paperGrade" required class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700">
                     <option value="">请选择年级...</option>
                     <option value="大一">大一</option>
                     <option value="大二">大二</option>
@@ -51,20 +51,20 @@
 
             <!-- 试卷标题 -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷标题 *</label>
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">试卷标题 *</label>
                 <input type="text" id="paperTitle" required placeholder="例如：2024秋高等数学期末考试"
-                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700 placeholder:text-slate-400">
+                    class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 placeholder:text-stone-400">
             </div>
 
             <!-- 年份 + 学期 -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">年份 *</label>
-                    <select id="paperYear" required class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700"></select>
+                    <label class="block text-sm font-medium text-stone-700 mb-1.5">年份 *</label>
+                    <select id="paperYear" required class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700"></select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">学期 *</label>
-                    <select id="paperSemester" required class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700">
+                    <label class="block text-sm font-medium text-stone-700 mb-1.5">学期 *</label>
+                    <select id="paperSemester" required class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700">
                         <option value="上学期期末">上学期期末</option>
                         <option value="上学期期中">上学期期中</option>
                         <option value="下学期期末">下学期期末</option>
@@ -75,25 +75,24 @@
 
             <!-- 教师 -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">授课教师（选填）</label>
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">授课教师（选填）</label>
                 <input type="text" id="paperTeacher" placeholder="例如：张老师"
-                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700 placeholder:text-slate-400">
+                    class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 placeholder:text-stone-400">
             </div>
 
             <!-- 你的名字 -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">你的名字（选填）</label>
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">你的名字（选填）</label>
                 <input type="text" id="paperUploader" placeholder="显示在试卷信息中"
-                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-700 placeholder:text-slate-400">
+                    class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 placeholder:text-stone-400">
             </div>
 
             <!-- 试卷文件 -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷文件 *</label>
-                <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-amber-300 hover:bg-amber-50/30 transition-colors">
-                    <div class="text-4xl mb-2 opacity-70">📄</div>
-                    <p class="text-slate-500">点击选择或拖拽文件</p>
-                    <p class="text-slate-400 text-sm mt-1">支持 PDF / Word（.doc .docx），最大 10MB</p>
+                <label class="block text-sm font-medium text-stone-700 mb-1.5">试卷文件 *</label>
+                <div id="dropZone" class="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center cursor-pointer hover:border-amber-300 hover:bg-amber-50/30 transition-colors">
+                    <p class="text-stone-500">点击选择或拖拽文件</p>
+                    <p class="text-stone-400 text-sm mt-1">支持 PDF / Word（.doc .docx），最大 10MB</p>
                 </div>
                 <input type="file" id="fileInput" accept=".pdf,.doc,.docx" class="hidden">
                 <div id="fileInfo" class="hidden mt-2 p-3 bg-amber-50 rounded-xl flex items-center justify-between border border-amber-100">
@@ -101,12 +100,12 @@
                         <span id="fileName" class="text-sm font-medium text-amber-800"></span>
                         <span id="fileSize" class="text-sm text-amber-600 ml-2"></span>
                     </div>
-                    <button type="button" id="removeFile" class="text-slate-400 hover:text-red-500 text-sm transition-colors">移除</button>
+                    <button type="button" id="removeFile" class="text-stone-400 hover:text-red-500 text-sm transition-colors">移除</button>
                 </div>
             </div>
 
             <!-- 提交按钮 -->
-            <button type="submit" id="submitBtn" class="w-full bg-slate-800 text-white py-3.5 rounded-xl hover:bg-slate-700 font-medium disabled:opacity-40 transition-colors" disabled>
+            <button type="submit" id="submitBtn" class="w-full bg-stone-800 text-white py-3.5 rounded-xl hover:bg-stone-700 font-medium disabled:opacity-40 transition-colors" disabled>
                 提交试卷
             </button>
         </form>
@@ -114,34 +113,32 @@
         <!-- 提交进度 -->
         <div id="progressOverlay" class="hidden fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="bg-white rounded-2xl p-8 text-center max-w-sm shadow-xl">
-                <div id="progressSpinner" class="animate-spin h-8 w-8 border-2 border-slate-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p id="progressText" class="text-slate-600 font-medium">正在提交...</p>
+                <div id="progressSpinner" class="animate-spin h-8 w-8 border-2 border-stone-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p id="progressText" class="text-stone-600 font-medium">正在提交...</p>
             </div>
         </div>
 
         <!-- 提交成功 -->
         <div id="successModal" class="hidden fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="bg-white rounded-2xl p-8 text-center max-w-sm shadow-xl">
-                <div class="text-5xl mb-4">🎉</div>
-                <h3 class="text-xl font-bold text-slate-800 mb-2">提交成功！</h3>
-                <p class="text-slate-500 mb-2">感谢你的分享！</p>
-                <p class="text-slate-400 text-sm mb-6">管理员审核后会尽快上线试卷</p>
-                <a href="." class="inline-block bg-slate-800 text-white px-8 py-3 rounded-xl hover:bg-slate-700 transition-colors font-medium">返回首页</a>
+                <h3 class="text-xl font-bold text-stone-800 mb-2">提交成功</h3>
+                <p class="text-stone-500 mb-2">感谢你的分享！</p>
+                <p class="text-stone-400 text-sm mb-6">管理员审核后会尽快上线试卷</p>
+                <a href="." class="inline-block bg-stone-800 text-white px-8 py-3 rounded-xl hover:bg-stone-700 transition-colors font-medium">返回首页</a>
             </div>
         </div>
 
         <!-- 提交失败 -->
         <div id="errorModal" class="hidden fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="bg-white rounded-2xl p-8 text-center max-w-sm shadow-xl">
-                <div class="text-5xl mb-4">😵</div>
-                <h3 class="text-xl font-bold text-slate-800 mb-2">提交失败</h3>
-                <p id="errorText" class="text-slate-500 mb-6">请稍后重试</p>
-                <button onclick="location.reload()" class="bg-slate-800 text-white px-8 py-3 rounded-xl hover:bg-slate-700 transition-colors font-medium">刷新重试</button>
+                <h3 class="text-xl font-bold text-stone-800 mb-2">提交失败</h3>
+                <p id="errorText" class="text-stone-500 mb-6">请稍后重试</p>
+                <button onclick="location.reload()" class="bg-stone-800 text-white px-8 py-3 rounded-xl hover:bg-stone-700 transition-colors font-medium">刷新重试</button>
             </div>
         </div>
     </main>
 
-    <footer class="text-center py-8 text-slate-400 text-xs">
+    <footer class="text-center py-8 text-stone-400 text-xs">
         <p>Tus · 北京工业大学试卷共享平台</p>
     </footer>
 
