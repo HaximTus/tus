@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const issueBody = buildIssueBody(subject, title, year, semester, teacher, uploader, selectedFile.name);
 
         // 打开 GitHub Issues 页面（预填信息）
-        const githubUrl = `https://github.com/tjiux/tus/issues/new?template=submit-paper.yml&title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+        const githubUrl = `https://github.com/tjiux/tus/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
 
         // 延迟一下让用户看到提示
         setTimeout(() => {
