@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/announcement.css">
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-stone-50 min-h-screen">
+<body class="bg-gradient-to-br from-stone-100 to-amber-50/60 min-h-screen">
     <!-- 导航栏 -->
-    <nav class="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40">
+    <nav class="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="." class="text-2xl font-bold text-slate-800 tracking-tight">Tus</a>
+            <a href="." class="text-2xl font-bold text-stone-800 tracking-tight">Tus</a>
             <div class="flex items-center gap-3">
-                <span class="nav-announcement" id="navAnnouncement">📜 公告</span>
+                <span class="nav-announcement" id="navAnnouncement">公告</span>
                 <a href="submit.html" class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 text-sm font-medium transition-colors">提交试卷</a>
             </div>
         </div>
@@ -23,25 +23,25 @@
     <main class="max-w-6xl mx-auto px-4 py-10">
         <!-- 科目信息 -->
         <div class="mb-8">
-            <a href="." class="text-slate-500 hover:text-slate-700 text-sm transition-colors">&larr; 返回所有科目</a>
-            <h1 id="subjectTitle" class="text-3xl font-bold text-slate-800 mt-2">加载中...</h1>
-            <p id="subjectTeacher" class="text-slate-400 mt-1 text-sm"></p>
-            <p id="subjectDescription" class="text-slate-500 mt-2"></p>
+            <a href="." class="text-stone-500 hover:text-stone-700 text-sm transition-colors">&larr; 返回所有科目</a>
+            <h1 id="subjectTitle" class="text-3xl font-bold text-stone-800 mt-2">加载中...</h1>
+            <p id="subjectTeacher" class="text-stone-400 mt-1 text-sm"></p>
+            <p id="subjectDescription" class="text-stone-500 mt-2"></p>
         </div>
 
         <!-- 筛选工具栏 -->
         <div class="flex flex-wrap gap-3 mb-6 items-center">
-            <select id="yearFilter" class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-600">
+            <select id="yearFilter" class="px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-600">
                 <option value="">全部年份</option>
             </select>
-            <select id="semesterFilter" class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-slate-600">
+            <select id="semesterFilter" class="px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-600">
                 <option value="">全部学期</option>
                 <option value="上学期期中">上学期期中</option>
                 <option value="上学期期末">上学期期末</option>
                 <option value="下学期期中">下学期期中</option>
                 <option value="下学期期末">下学期期末</option>
             </select>
-            <input type="text" id="searchPaper" placeholder="搜索试卷标题..." class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm placeholder:text-slate-400">
+            <input type="text" id="searchPaper" placeholder="搜索试卷标题..." class="px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm placeholder:text-stone-400">
         </div>
 
         <!-- 试卷列表 -->
@@ -51,27 +51,26 @@
 
         <!-- 加载状态 -->
         <div id="loadingState" class="text-center py-20">
-            <div class="animate-spin h-8 w-8 border-2 border-slate-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p class="text-slate-400 text-sm">加载中...</p>
+            <div class="animate-spin h-8 w-8 border-2 border-stone-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-stone-400 text-sm">加载中...</p>
         </div>
 
         <!-- 空状态 -->
         <div id="emptyState" class="text-center py-20 hidden">
-            <div class="text-5xl mb-4 opacity-60">📄</div>
-            <p class="text-slate-500 text-lg">暂无试卷</p>
-            <p class="text-slate-400 mt-2 text-sm">去做第一个上传试卷的人吧！</p>
+            <p class="text-stone-400 text-lg">暂无试卷</p>
+            <p class="text-stone-400 mt-2 text-sm">去做第一个上传试卷的人吧！</p>
         </div>
 
         <!-- 错误状态 -->
         <div id="errorState" class="text-center py-20 hidden">
             <div class="text-5xl mb-4 opacity-60">😵</div>
             <p class="text-red-500 text-lg">加载失败</p>
-            <p class="text-slate-400 mt-2 text-sm" id="errorMessage">请检查网络连接后刷新页面</p>
-            <button onclick="location.reload()" class="mt-4 bg-slate-700 text-white px-6 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm">刷新重试</button>
+            <p class="text-stone-400 mt-2 text-sm" id="errorMessage">请检查网络连接后刷新页面</p>
+            <button onclick="location.reload()" class="mt-4 bg-stone-700 text-white px-6 py-2 rounded-lg hover:bg-stone-800 transition-colors text-sm">刷新重试</button>
         </div>
     </main>
 
-    <footer class="text-center py-8 text-slate-400 text-xs">
+    <footer class="text-center py-8 text-stone-400 text-xs">
         <p>Tus · 北京工业大学试卷共享平台</p>
     </footer>
 
