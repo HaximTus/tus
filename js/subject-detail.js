@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const errorMessage = document.getElementById('errorMessage');
     const yearFilter = document.getElementById('yearFilter');
     const semesterFilter = document.getElementById('semesterFilter');
-    const gradeFilter = document.getElementById('gradeFilter');
     const searchPaper = document.getElementById('searchPaper');
 
     let allPapers = [];
@@ -41,7 +40,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            const gradeTag = subject.grade ? `<span class="text-sm bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">${subject.grade}</span>` : '';
+            const gradeTag = subject.grade
+                ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full ml-2 font-medium">${subject.grade}</span>`
+                : '';
             subjectTitle.innerHTML = `${subject.name}${gradeTag}`;
             subjectTeacher.textContent = subject.teacher ? `👨‍🏫 ${subject.teacher}` : '';
             subjectDescription.textContent = subject.description || '';
@@ -70,35 +71,43 @@ document.addEventListener('DOMContentLoaded', async function() {
         errorMessage.textContent = msg;
     }
 
+    function getSemesterBadge(semester) {
+        const map = {
+            '上学期期中': 'bg-amber-100 text-amber-700',
+            '上学期期末': 'bg-emerald-100 text-emerald-700',
+            '下学期期中': 'bg-sky-100 text-sky-700',
+            '下学期期末': 'bg-violet-100 text-violet-700',
+        };
+        const colors = map[semester] || 'bg-slate-100 text-slate-600';
+        return `<span class="text-xs ${colors} px-2 py-0.5 rounded-full font-medium">${semester}</span>`;
+    }
+
     function renderPapers(papers) {
         if (papers.length === 0) {
             papersContainer.innerHTML = `
-                <div class="text-center py-10 text-gray-400">
+                <div class="text-center py-10 text-slate-400">
                     没有匹配的试卷
                 </div>`;
             return;
         }
 
         papersContainer.innerHTML = papers.map(paper => {
-            const semesterBadge = paper.semester === '期中'
-                ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">期中</span>'
-                : '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">期末</span>';
-
+            const semesterBadge = getSemesterBadge(paper.semester);
             const fileSize = formatFileSize(paper.file_size);
-            // 使用相对路径或完整 URL
             const fileUrl = paper.file_url || `${getBaseUrl()}/assets/papers/${paper.file_path || ''}`;
-
-            const gradeBadge = paper.grade ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">${paper.grade}</span>` : '';
+            const gradeBadge = paper.grade
+                ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">${paper.grade}</span>`
+                : '';
 
             return `
-                <div class="paper-card bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center justify-between">
+                <div class="paper-card bg-white rounded-xl shadow-sm p-5 border border-slate-100 flex items-center justify-between">
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h3 class="font-medium text-gray-800 truncate">${escapeHtml(paper.title)}</h3>
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <h3 class="font-medium text-slate-800 truncate">${escapeHtml(paper.title)}</h3>
                             ${semesterBadge}
                             ${gradeBadge}
                         </div>
-                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-400">
+                        <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-400">
                             <span>📅 ${paper.year}年</span>
                             <span>📎 ${fileSize}</span>
                             <span>👤 ${escapeHtml(paper.uploaded_by || '匿名')}</span>
@@ -106,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </div>
                     </div>
                     <a href="${fileUrl}" target="_blank"
-                       class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm whitespace-nowrap">
+                       class="ml-4 px-5 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 text-sm whitespace-nowrap font-medium transition-colors">
                         下载
                     </a>
                 </div>`;
@@ -116,13 +125,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     function filterPapers() {
         const year = yearFilter.value;
         const semester = semesterFilter.value;
-        const grade = gradeFilter.value;
         const keyword = searchPaper.value.toLowerCase().trim();
 
         let filtered = allPapers;
         if (year) filtered = filtered.filter(p => p.year === parseInt(year));
         if (semester) filtered = filtered.filter(p => p.semester === semester);
-        if (grade) filtered = filtered.filter(p => p.grade === grade);
         if (keyword) filtered = filtered.filter(p => p.title.toLowerCase().includes(keyword));
 
         renderPapers(filtered);
@@ -130,7 +137,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     yearFilter.addEventListener('change', filterPapers);
     semesterFilter.addEventListener('change', filterPapers);
-    gradeFilter.addEventListener('change', filterPapers);
     searchPaper.addEventListener('input', filterPapers);
 
     await loadData();
