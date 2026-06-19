@@ -76,3 +76,11 @@ async function getSubjectsWithCount() {
         papers: [{ count: papers.filter(p => p.subject_id === subject.id).length }]
     }));
 }
+
+// 按字匹配（"高数" → "高等数学" ✓，输入的所有字都要出现在目标文本中）
+function charMatch(text, query) {
+    if (!query) return true;
+    const t = text.toLowerCase();
+    const q = query.toLowerCase().replace(/\s/g, '');
+    return [...q].every(char => t.includes(char));
+}
