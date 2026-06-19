@@ -17,22 +17,27 @@ Tus 是一个面向北京工业大学学生的试卷共享平台，部署在 Git
 Tus/
 ├── index.html              # 首页 - 科目列表
 ├── subject-detail.html     # 科目详情页 - 试卷列表
-├── upload.html             # 上传试卷（引导页）
-├── create-subject.html     # 新建科目（引导页）
+├── submit.html             # 用户提交试卷页（同学们通过此页面提交）
+├── upload.html             # 管理员上传试卷（引导页）
+├── create-subject.html     # 管理员新建科目（引导页）
 ├── css/style.css           # 样式
 ├── js/
 │   ├── api-client.js       # 数据 API 客户端（读取 JSON）
 │   ├── index.js            # 首页逻辑
 │   ├── subject-detail.js   # 科目详情逻辑
-│   └── create-subject.js   # 新建科目逻辑
+│   └── submit.js           # 用户提交试卷逻辑（创建 GitHub Issue）
 ├── data/
 │   ├── subjects.json       # 科目数据
 │   └── papers.json         # 试卷数据
 ├── assets/papers/          # PDF 试卷文件存放目录
 ├── scripts/
-│   └── manage.js           # 管理脚本（添加科目/试卷/部署）
-├── .github/workflows/
-│   └── deploy.yml          # GitHub Actions 部署配置
+│   ├── manage.js           # 管理脚本（添加科目/试卷/审核提交/部署）
+│   └── deploy-via-api.js   # API 部署脚本（当 git push 失败时使用）
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   └── submit-paper.yml  # 试卷提交的 Issue 模板
+│   └── workflows/
+│       └── deploy.yml       # GitHub Actions 部署配置
 ├── supabase-setup.sql      # (备用) Supabase 数据库初始化脚本
 ├── CLAUDE.md               # 本文件
 └── README.md
