@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传试卷 - Tus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="." class="text-2xl font-bold text-blue-600">Tus</a>
+            <div class="flex gap-3">
+                <a href="create-subject.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">+ 新建科目</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">📤 上传试卷</h1>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+            <div class="flex items-start gap-3">
+                <div class="text-2xl">💡</div>
+                <div>
+                    <h3 class="font-medium text-yellow-800 mb-2">需要运行管理脚本来上传试卷</h3>
+                    <p class="text-yellow-700 text-sm mb-3">由于网站部署在 GitHub Pages（纯静态），上传试卷需要通过管理脚本操作。</p>
+                    <div class="bg-white rounded-lg p-4 text-sm font-mono text-gray-700">
+                        <p class="mb-2">在项目目录打开终端，运行：</p>
+                        <code class="block bg-gray-50 p-3 rounded border text-blue-700">
+                            node scripts/manage.js
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">上传试卷步骤：</h3>
+            <ol class="space-y-4 text-gray-600">
+                <li class="flex items-start gap-3">
+                    <span class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 mt-0.5">1</span>
+                    <div>
+                        <strong>准备 PDF 文件</strong>
+                        <p class="text-sm text-gray-400 mt-1">将试卷 PDF 放在 <code class="bg-gray-100 px-1 rounded">assets/papers/</code> 目录下</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 mt-0.5">2</span>
+                    <div>
+                        <strong>运行管理脚本</strong>
+                        <p class="text-sm text-gray-400 mt-1">终端运行 <code class="bg-gray-100 px-1 rounded">node scripts/manage.js</code>，选择「添加试卷」</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 mt-0.5">3</span>
+                    <div>
+                        <strong>填写信息</strong>
+                        <p class="text-sm text-gray-400 mt-1">按提示填写试卷标题、年份、学期等信息</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 mt-0.5">4</span>
+                    <div>
+                        <strong>生成并部署</strong>
+                        <p class="text-sm text-gray-400 mt-1">脚本会自动更新数据文件，你也可以选择一键提交到 GitHub</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="mt-6 bg-blue-50 rounded-xl p-4">
+            <p class="text-sm text-blue-700">
+                📌 后续版本会添加在线上传功能，届时同学们可以直接在网页上提交试卷！
+            </p>
+        </div>
+    </main>
+
+    <footer class="text-center py-6 text-gray-400 text-sm">
+        <p>Tus - 北京工业大学试卷共享平台</p>
+    </footer>
+</body>
+</html>
