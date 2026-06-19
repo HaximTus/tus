@@ -216,6 +216,16 @@ async function deployToGitHub() {
     console.log('\n🚀 部署到 GitHub：');
     console.log('-'.repeat(30));
 
+    const method = await question('  部署方式: [1]git push [2]API上传 (默认2): ');
+    if (method === '1') {
+        await deployViaGit();
+    } else {
+        await deployViaAPI();
+    }
+}
+
+// 方式1: git push
+async function deployViaGit() {
     const confirm = await question('  确定要提交并推送到 GitHub 吗? (y/N): ');
     if (confirm.toLowerCase() !== 'y') {
         console.log('  已取消');
@@ -234,17 +244,35 @@ async function deployToGitHub() {
         console.log('\n  3/3 推送到 GitHub...');
         execSync('git push', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
 
-        console.log('\n  ✅ 部署请求已提交！');
-        console.log('  ⏳ GitHub Actions 将自动构建并部署到 Pages');
-        console.log('  🔗 约 1-2 分钟后访问: https://tjiux.github.io/tus/');
-
-        // 如果 deploy.yml 设置好了，用户也可以在 GitHub 仓库的 Actions 标签页查看进度
+        console.log('\n  ✅ 部署成功！');
+        console.log('  🔗 https://tjiux.github.io/tus/');
     } catch (e) {
         console.log(`\n  ❌ 部署失败: ${e.message}`);
-        console.log('  请确保:');
-        console.log('  1. 已在项目根目录运行 git init');
-        console.log('  2. 已添加远程仓库: git remote add origin https://github.com/tjiux/tus.git');
-        console.log('  3. GitHub Token 已正确配置');
+        console.log('  建议改用 API 上传方式部署');
+    }
+}
+
+// 方式2: API 上传（适合中国内地网络环境）
+async function deployViaAPI() {
+    console.log('\n  使用 API 上传文件到 GitHub...');
+    console.log('  此方式会更新所有网页文件和数据文件\n');
+
+    const confirm = await question('  确定要部署吗? (y/N): ');
+    if (confirm.toLowerCase() !== 'y') {
+        console.log('  已取消');
+        return;
+    }
+
+    try {
+        require(path.join(__dirname, 'deploy-via-api.js'));
+    } catch (e) {
+        // 直接运行部署脚本
+        const { execSync } = require('child_process');
+        try {
+            execSync('node scripts/deploy-via-api.js', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
+        } catch (e2) {
+            console.log(`\n  ❌ 部署失败: ${e2.message}`);
+        }
     }
 }
 
