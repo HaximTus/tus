@@ -60,15 +60,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (filtered.length === 0) {
             dropdownItems.innerHTML = `
-                <div class="px-4 py-3 text-sm text-slate-400 italic">
+                <div class="px-4 py-3 text-sm text-stone-400 italic">
                     将使用新科目: "${filter}"
                 </div>`;
             return;
         }
 
         dropdownItems.innerHTML = filtered.map(s => {
-            const gradeTag = s.grade ? `<span class="text-xs text-slate-400 ml-2">${s.grade}</span>` : '';
-            return `<button type="button" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition-colors flex items-center justify-between subject-option" data-name="${s.name}">
+            const gradeTag = s.grade ? `<span class="text-xs text-stone-400 ml-2">${s.grade}</span>` : '';
+            return `<button type="button" class="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-amber-50 hover:text-amber-800 transition-colors flex items-center justify-between subject-option" data-name="${s.name}">
                 ${s.name}${gradeTag}
             </button>`;
         }).join('');
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             // 3. 成功！
             progressOverlay.classList.add('hidden');
-            document.querySelector('#successModal .text-slate-500').innerHTML =
+            document.querySelector('#successModal .text-stone-500').innerHTML =
                 '感谢你的分享！🎉<br>管理员审核后会尽快上线试卷';
             successModal.classList.remove('hidden');
 
