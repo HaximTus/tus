@@ -177,28 +177,38 @@ async function main() {
         }
     }
 
-    // 自动上传 assets/papers/ 下的 PDF 文件
+    // 自动上传 assets/papers/ 下新增的 PDF 文件（已存在的跳过）
     const pdfFiles = getPDFFiles(projectRoot);
     if (pdfFiles.length > 0) {
-        console.log(`  📄 发现 ${pdfFiles.length} 个 PDF 文件，开始上传...`);
+        // 先检查哪些 PDF 已经在仓库中
+        let newCount = 0;
+        let skipCount = 0;
         for (const filePath of pdfFiles) {
+            const sha = await getFileSha(filePath);
+            if (sha) {
+                // 文件已存在，跳过
+                skipCount++;
+                continue;
+            }
+
             const fullPath = path.join(projectRoot, filePath);
             try {
-                // PDF 文件大小限制检查（GitHub 单文件最大 100MB）
                 const stats = fs.statSync(fullPath);
                 if (stats.size > 100 * 1024 * 1024) {
                     console.error(`  ⚠️ 跳过 ${filePath}：超过 GitHub 100MB 大小限制`);
                     failed++;
                     continue;
                 }
+                console.log(`  📄 新 PDF: ${filePath}`);
                 const content = fs.readFileSync(fullPath).toString('base64');
                 const ok = await uploadFile(filePath, content, true);
-                if (ok) success++; else failed++;
+                if (ok) newCount++; else failed++;
             } catch (e) {
                 console.error(`  ❌ 读取失败: ${filePath} - ${e.message}`);
                 failed++;
             }
         }
+        console.log(`  📊 PDF: ${newCount} 新上传, ${skipCount} 已存在跳过`);
     }
 
     // 上传 Issue 模板（路径含 .github，需要先创建目录）
