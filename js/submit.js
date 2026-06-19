@@ -269,9 +269,13 @@ async function createIssue(subject, title, grade, year, semester, teacher, uploa
     body += `| **文件名** | ${pdfName} |\n`;
     body += `\n---\n`;
     if (rawUrl) {
+        const isWord = repoPath.endsWith('.doc') || repoPath.endsWith('.docx');
+        const previewUrl = isWord
+            ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawUrl)}`
+            : `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${encodeURI(repoPath)}`;
         body += `\n### 📎 试卷文件\n`;
         body += `\n📁 仓库路径: \`${repoPath}\`\n`;
-        body += `\n👁️ [在线预览](${`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${encodeURI(repoPath)}`})\n`;
+        body += `\n👁️ [在线预览](${previewUrl})\n`;
         body += `\n📥 [原始下载](${rawUrl})\n`;
     }
     body += `\n> 文件已保存在仓库中，审核通过后移至正式目录。\n`;
