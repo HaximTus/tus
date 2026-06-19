@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const errorMessage = document.getElementById('errorMessage');
     const yearFilter = document.getElementById('yearFilter');
     const semesterFilter = document.getElementById('semesterFilter');
+    const gradeFilter = document.getElementById('gradeFilter');
     const searchPaper = document.getElementById('searchPaper');
 
     let allPapers = [];
@@ -87,12 +88,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             // 使用相对路径或完整 URL
             const fileUrl = paper.file_url || `${getBaseUrl()}/assets/papers/${paper.file_path || ''}`;
 
+            const gradeBadge = paper.grade ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">${paper.grade}</span>` : '';
+
             return `
                 <div class="paper-card bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center justify-between">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
                             <h3 class="font-medium text-gray-800 truncate">${escapeHtml(paper.title)}</h3>
                             ${semesterBadge}
+                            ${gradeBadge}
                         </div>
                         <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-400">
                             <span>📅 ${paper.year}年</span>
@@ -112,11 +116,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     function filterPapers() {
         const year = yearFilter.value;
         const semester = semesterFilter.value;
+        const grade = gradeFilter.value;
         const keyword = searchPaper.value.toLowerCase().trim();
 
         let filtered = allPapers;
         if (year) filtered = filtered.filter(p => p.year === parseInt(year));
         if (semester) filtered = filtered.filter(p => p.semester === semester);
+        if (grade) filtered = filtered.filter(p => p.grade === grade);
         if (keyword) filtered = filtered.filter(p => p.title.toLowerCase().includes(keyword));
 
         renderPapers(filtered);
@@ -124,6 +130,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     yearFilter.addEventListener('change', filterPapers);
     semesterFilter.addEventListener('change', filterPapers);
+    gradeFilter.addEventListener('change', filterPapers);
     searchPaper.addEventListener('input', filterPapers);
 
     await loadData();
