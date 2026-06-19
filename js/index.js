@@ -49,12 +49,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         container.innerHTML = subjects.map(subject => {
             const paperCount = subject.papers?.[0]?.count || 0;
+            const gradeBadge = subject.grade ? `<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">${subject.grade}</span>` : '';
             return `
                 <a href="subject-detail.html?id=${subject.id}" class="subject-card bg-white rounded-xl shadow-sm p-5 border border-gray-100 block">
-                    <h3 class="font-semibold text-gray-800 text-lg mb-1">${subject.name}</h3>
+                    <div class="flex items-start justify-between mb-1">
+                        <h3 class="font-semibold text-gray-800 text-lg">${subject.name}</h3>
+                        ${gradeBadge}
+                    </div>
                     ${subject.teacher ? `<p class="text-gray-400 text-sm mb-2">${subject.teacher}</p>` : ''}
                     ${subject.description ? `<p class="text-gray-500 text-sm mb-3 line-clamp-2">${subject.description}</p>` : ''}
-                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                    <div class="flex items-center gap-3 text-sm text-gray-400">
                         <span>📄 ${paperCount} 份试卷</span>
                     </div>
                 </a>
@@ -72,7 +76,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const filtered = allSubjects.filter(s =>
             s.name.toLowerCase().includes(keyword) ||
             (s.teacher && s.teacher.toLowerCase().includes(keyword)) ||
-            (s.description && s.description.toLowerCase().includes(keyword))
+            (s.description && s.description.toLowerCase().includes(keyword)) ||
+            (s.grade && s.grade.includes(keyword))
         );
         renderSubjects(filtered);
     });
