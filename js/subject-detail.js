@@ -94,10 +94,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         papersContainer.innerHTML = papers.map(paper => {
             const semesterBadge = getSemesterBadge(paper.semester);
             const fileSize = formatFileSize(paper.file_size);
-            const fileUrl = paper.file_url || `${getBaseUrl()}/assets/papers/${paper.file_path || ''}`;
+            const rawPath = paper.file_path || '';
+            const encodedPath = encodeURI(rawPath);
+            const fileUrl = paper.file_url || `${getBaseUrl()}/assets/papers/${encodedPath}`;
             const gradeBadge = paper.grade
                 ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">${paper.grade}</span>`
                 : '';
+
+            // 根据文件扩展名决定 download 属性值
+            const ext = (paper.file_name || rawPath).split('.').pop().toLowerCase();
+            const downloadName = paper.file_name || `paper.${ext === 'doc' || ext === 'docx' ? 'docx' : 'pdf'}`;
 
             return `
                 <div class="paper-card bg-white rounded-xl shadow-sm p-5 border border-slate-100 flex items-center justify-between">
@@ -111,10 +117,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <span>📅 ${paper.year}年</span>
                             <span>📎 ${fileSize}</span>
                             <span>👤 ${escapeHtml(paper.uploaded_by || '匿名')}</span>
-                            <span>📥 ${paper.download_count || 0} 次下载</span>
                         </div>
                     </div>
-                    <a href="${fileUrl}" download="${escapeHtml(paper.file_name || 'paper.pdf')}"
+                    <a href="${fileUrl}" download="${escapeHtml(downloadName)}"
                        class="ml-4 px-5 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 text-sm whitespace-nowrap font-medium transition-colors">
                         下载
                     </a>
