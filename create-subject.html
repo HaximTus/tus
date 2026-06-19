@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建科目 - Tus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="." class="text-2xl font-bold text-blue-600">Tus</a>
+            <div class="flex gap-3">
+                <a href="upload.html" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">上传试卷</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">📖 新建科目</h1>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+            <div class="flex items-start gap-3">
+                <div class="text-2xl">💡</div>
+                <div>
+                    <h3 class="font-medium text-yellow-800 mb-2">需要运行管理脚本来添加科目</h3>
+                    <p class="text-yellow-700 text-sm mb-3">由于网站部署在 GitHub Pages（纯静态），添加科目需要通过管理脚本操作。</p>
+                    <div class="bg-white rounded-lg p-4 text-sm font-mono text-gray-700">
+                        <p class="mb-2">在项目目录打开终端，运行：</p>
+                        <code class="block bg-gray-50 p-3 rounded border text-blue-700">
+                            node scripts/manage.js
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">管理脚本支持的功能：</h3>
+            <ul class="space-y-3 text-gray-600">
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500">✅</span>
+                    <span><strong>列出所有科目</strong> — 查看当前已有的科目和试卷数量</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500">✅</span>
+                    <span><strong>新建科目</strong> — 添加课程名称和授课教师</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500">✅</span>
+                    <span><strong>添加试卷</strong> — 选择科目，填写信息，拷贝 PDF 到指定目录</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500">✅</span>
+                    <span><strong>生成数据文件</strong> — 自动生成 JSON 数据供网站使用</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500">✅</span>
+                    <span><strong>部署到 GitHub</strong> — 一键提交并推送更新</span>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="text-center py-6 text-gray-400 text-sm">
+        <p>Tus - 北京工业大学试卷共享平台</p>
+    </footer>
+</body>
+</html>
