@@ -3,9 +3,9 @@
  *
  * 流程：
  * 1. 用户填写信息 + 选择 PDF
- * 2. PDF 上传到临时文件托管，获取下载链接
- * 3. 通过 GitHub Issues API 直接创建 Issue（无需登录）
- * 4. 页面显示提交结果，不跳转到 GitHub
+ * 2. PDF 直接上传到 GitHub 仓库 assets/papers/pending/ 目录
+ * 3. 通过 GitHub Issues API 创建 Issue（带有文件路径引用）
+ * 4. 页面显示提交结果，全程无感
  */
 
 // GitHub 配置（双重混淆：反转+Base64，避免触发密钥扫描）
@@ -179,17 +179,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         submitBtn.disabled = true;
 
         try {
-            // 1. 上传 PDF 到临时托管
-            let pdfUrl = '';
-            try {
-                pdfUrl = await uploadToTempHost(selectedFile);
-                progressText.textContent = '正在提交到审核队列...';
-            } catch (e) {
-                console.warn('PDF 上传失败，将继续提交不含附件的 Issue:', e);
-            }
+            // 1. 上传 PDF 到 GitHub 仓库
+            progressText.textContent = '正在上传文件...';
+            const { repoPath, rawUrl } = await uploadToGitHubRepo(selectedFile);
 
-            // 2. 创建 GitHub Issue
-            const issueUrl = await createIssue(subject, title, grade, year, semester, teacher, uploader, pdfUrl, selectedFile.name);
+            progressText.textContent = '正在提交到审核队列...';
+
+            // 2. 创建 GitHub Issue（含文件引用）
+            const issueUrl = await createIssue(subject, title, grade, year, semester, teacher, uploader, repoPath, rawUrl, selectedFile.name);
 
             // 3. 成功！
             progressOverlay.classList.add('hidden');
@@ -206,35 +203,51 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 });
 
-// ========== 上传 PDF 到临时托管 ==========
-async function uploadToTempHost(file) {
-    const formData = new FormData();
-    formData.append('file', file);
+// ========== 上传 PDF 到 GitHub 仓库 ==========
+async function uploadToGitHubRepo(file) {
+    // 生成唯一文件名：时间戳-原文件名
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9一-龥._-]/g, '_');
+    const repoPath = `assets/papers/pending/${timestamp}-${safeName}`;
 
-    const response = await fetch('https://tmpfiles.org/api/v1/upload', {
-        method: 'POST',
-        body: formData,
+    // 读取文件内容为 Base64
+    const reader = new FileReader();
+    const content = await new Promise((resolve, reject) => {
+        reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+    // 上传到 GitHub Contents API
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${repoPath}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: `提交试卷: ${file.name}`,
+            content: content,
+            branch: 'main',
+        }),
     });
 
     if (!response.ok) {
-        throw new Error('文件上传失败 (' + response.status + ')');
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `文件上传失败 (${response.status})`);
     }
 
-    const data = await response.json();
-    if (!data.data || !data.data.url) {
-        throw new Error('文件上传返回无效响应');
-    }
-
-    let url = data.data.url;
-    // tmpfiles.org URL 格式转换
-    if (url.includes('tmpfiles.org/') && !url.includes('/dl/')) {
-        url = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-    }
-    return url;
+    // 返回仓库路径和原始文件 URL
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${repoPath}`;
+    return { repoPath, rawUrl };
 }
 
 // ========== 创建 GitHub Issue（直接 API） ==========
-async function createIssue(subject, title, grade, year, semester, teacher, uploader, pdfUrl, pdfName) {
+async function createIssue(subject, title, grade, year, semester, teacher, uploader, repoPath, rawUrl, pdfName) {
     const issueTitle = `[新试卷] ${title}（${subject}·${grade}·${semester}）`;
 
     let body = `### 📋 试卷信息\n\n`;
@@ -247,13 +260,14 @@ async function createIssue(subject, title, grade, year, semester, teacher, uploa
     body += `| **学期** | ${semester} |\n`;
     if (teacher) body += `| **教师** | ${teacher} |\n`;
     body += `| **提交者** | ${uploader} |\n`;
-    if (pdfName) body += `| **文件名** | ${pdfName} |\n`;
+    body += `| **文件名** | ${pdfName} |\n`;
     body += `\n---\n`;
-    if (pdfUrl) {
-        body += `\n### 📎 PDF 下载链接\n`;
-        body += `\n[下载 PDF 文件](${pdfUrl})\n`;
-        body += `\n> 请管理员及时下载保存，临时文件可能会过期。\n`;
+    if (rawUrl) {
+        body += `\n### 📎 PDF 文件\n`;
+        body += `\n📁 仓库路径: \`${repoPath}\`\n`;
+        body += `\n🔗 [查看 PDF 文件](${rawUrl})\n`;
     }
+    body += `\n> 文件已保存在仓库中，审核通过后移至正式目录。\n`;
     body += `\n---\n*由 Tus 提交系统自动创建*`;
 
     const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
