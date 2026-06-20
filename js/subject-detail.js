@@ -120,21 +120,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         papersContainer.innerHTML = html;
 
-        // 长标题跑马灯 — 双 rAF 确保布局完成后再检测
-        requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-                var titles = papersContainer.querySelectorAll('.paper-card h3');
-                for (var t = 0; t < titles.length; t++) {
-                    (function(el) {
-                        if (el.scrollWidth > el.clientWidth + 1) {
-                            el.classList.add('marquee-scroll');
-                            el.style.setProperty('--marquee-len', (el.scrollWidth - el.clientWidth) + 'px');
-                            startMarquee(el);
-                        }
-                    })(titles[t]);
-                }
-            });
-        });
+        // 长标题跑马灯 — 轮询直到浏览器完成布局（Chrome 渲染太快 rAF 不够用）
+        (function pollMarquee() {
+            var titles = papersContainer.querySelectorAll('.paper-card h3');
+            var allDone = true;
+            for (var t = 0; t < titles.length; t++) {
+                (function(el) {
+                    if (el._marqueeActive) return;
+                    // 轮询直到 scrollWidth 反映真实内容宽度
+                    if (el.scrollWidth > el.clientWidth + 0.5) {
+                        startMarquee(el);
+                    } else {
+                        allDone = false;
+                    }
+                })(titles[t]);
+            }
+            if (!allDone) setTimeout(pollMarquee, 100);
+        })();
 
         // 点击卡片弹出详情
         var cards = papersContainer.querySelectorAll('.paper-card');
