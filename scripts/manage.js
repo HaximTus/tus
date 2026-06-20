@@ -480,10 +480,13 @@ async function handleSubmission(issue) {
     if (pdfUrl) console.log(`    PDF链接: ${pdfUrl}`);
 
     console.log('');
+    const renamePrompt = await question('  更改试卷名? (直接回车保持原名): ');
+    const finalTitle = renamePrompt.trim() || title;
+
     const action = await question('  操作: [a]接受并添加 [d]拒绝并关闭 [s]跳过 (a/d/s): ');
 
     if (action.toLowerCase() === 'a') {
-        await acceptSubmission(issue, { subject, title, grade, year, semester, teacher, uploader, pdfUrl, repoPath });
+        await acceptSubmission(issue, { subject, title: finalTitle, grade, year, semester, teacher, uploader, pdfUrl, repoPath });
     } else if (action.toLowerCase() === 'd') {
         await rejectSubmission(issue, repoPath);
     } else {
@@ -713,6 +716,104 @@ async function cleanPending() {
     console.log('  💡 运行「部署到 GitHub」将删除提交到远程仓库');
 }
 
+// ==================== 管理科目 ====================
+
+async function manageSubjects() {
+    const subjects = readJSON(SUBJECTS_FILE);
+    if (subjects.length === 0) { console.log('\n  ❌ 暂无科目'); return; }
+
+    console.log('\n📚 科目列表：');
+    subjects.forEach(s => {
+        const gradeTag = s.grade ? ` [${s.grade}]` : '';
+        console.log(`  [${s.id}] ${s.name}${gradeTag}${s.teacher ? ` - ${s.teacher}` : ''}`);
+    });
+
+    const id = parseInt(await question('\n  选择科目编号: '));
+    const subject = subjects.find(s => s.id === id);
+    if (!subject) { console.log('  ❌ 无效编号'); return; }
+
+    console.log(`\n  当前: ${subject.name} (${subject.grade || '无年级'})`);
+    const action = await question('  操作: [r]重命名 [g]改年级 [d]删除 (按回车取消): ');
+    if (action === 'r') {
+        const newName = await question('  新名称: ');
+        if (newName.trim()) {
+            subject.name = newName.trim();
+            writeJSON(SUBJECTS_FILE, subjects);
+            console.log('  ✅ 科目已重命名');
+        }
+    } else if (action === 'g') {
+        const newGrade = await question('  年级 (1-大一 2-大二 3-大三 4-大四, 空=清除): ');
+        const gradeMap = { '1': '大一', '2': '大二', '3': '大三', '4': '大四' };
+        subject.grade = gradeMap[newGrade.trim()] || newGrade.trim() || '';
+        writeJSON(SUBJECTS_FILE, subjects);
+        console.log('  ✅ 年级已更新');
+    } else if (action === 'd') {
+        const confirm = await question(`  确定删除科目 "${subject.name}" 及其所有试卷? (y/N): `);
+        if (confirm.toLowerCase() === 'y') {
+            const papers = readJSON(PAPERS_FILE);
+            const filtered = papers.filter(p => p.subject_id !== subject.id);
+            writeJSON(PAPERS_FILE, filtered);
+            const updated = subjects.filter(s => s.id !== subject.id);
+            writeJSON(SUBJECTS_FILE, updated);
+            console.log(`  ✅ 已删除科目 "${subject.name}" 及其 ${papers.length - filtered.length} 份试卷`);
+        }
+    }
+}
+
+// ==================== 管理试卷 ====================
+
+async function managePapers() {
+    const subjects = readJSON(SUBJECTS_FILE);
+    if (subjects.length === 0) { console.log('\n  ❌ 暂无科目'); return; }
+
+    console.log('\n📚 选择科目：');
+    subjects.forEach(s => console.log(`  [${s.id}] ${s.name}`));
+
+    const subjId = parseInt(await question('\n  科目编号: '));
+    const subject = subjects.find(s => s.id === subjId);
+    if (!subject) { console.log('  ❌ 无效编号'); return; }
+
+    const papers = readJSON(PAPERS_FILE);
+    const items = papers.filter(p => p.subject_id === subjId);
+    if (items.length === 0) { console.log('  📭 该科目暂无试卷'); return; }
+
+    console.log(`\n📄 ${subject.name} 的试卷：`);
+    items.forEach(p => console.log(`  [${p.id}] ${p.title} (${p.year} ${p.semester})`));
+
+    const pid = parseInt(await question('\n  选择试卷编号: '));
+    const paper = items.find(p => p.id === pid);
+    if (!paper) { console.log('  ❌ 无效编号'); return; }
+
+    console.log(`\n  当前: ${paper.title}`);
+    const action = await question('  操作: [r]重命名 [m]移动科目 [d]删除 (按回车取消): ');
+    if (action === 'r') {
+        const newTitle = await question('  新标题: ');
+        if (newTitle.trim()) {
+            paper.title = newTitle.trim();
+            writeJSON(PAPERS_FILE, papers);
+            console.log('  ✅ 试卷已重命名');
+        }
+    } else if (action === 'm') {
+        console.log('\n  目标科目：');
+        subjects.forEach(s => console.log(`  [${s.id}] ${s.name}`));
+        const targetId = parseInt(await question('  目标科目编号: '));
+        if (subjects.find(s => s.id === targetId)) {
+            paper.subject_id = targetId;
+            writeJSON(PAPERS_FILE, papers);
+            console.log('  ✅ 试卷已移动');
+        } else {
+            console.log('  ❌ 无效科目');
+        }
+    } else if (action === 'd') {
+        const confirm = await question(`  确定删除 "${paper.title}"? 文件仍保留在本地. (y/N): `);
+        if (confirm.toLowerCase() === 'y') {
+            const updated = papers.filter(p => p.id !== paper.id);
+            writeJSON(PAPERS_FILE, updated);
+            console.log('  ✅ 试卷已删除');
+        }
+    }
+}
+
 async function main() {
     console.log('\n╔══════════════════════════╗');
     console.log('║        Tus 管理工具       ║');
@@ -723,11 +824,14 @@ async function main() {
         console.log('请选择操作：');
         console.log('  [1] 列出所有科目');
         console.log('  [2] 新建科目');
-        console.log('  [3] 添加试卷');
-        console.log('  [4] 查看待审核提交');
-        console.log('  [5] 部署到 GitHub');
-        console.log('  [6] 清理 pending 目录（已处理文件）');
-        console.log('  [0] 退出\n');
+        console.log('  [3] 管理科目（重命名/改年级/删除）');
+        console.log('  [4] 添加试卷');
+        console.log('  [5] 管理试卷（重命名/移动/删除）');
+        console.log('  [6] 查看待审核提交');
+        console.log('  [7] 部署到 GitHub');
+        console.log('  [8] 清理 pending 目录（已处理文件）');
+        console.log('  [0] 退出
+');
 
         const choice = await question('请输入编号: ');
 
@@ -739,15 +843,21 @@ async function main() {
                 await createSubject();
                 break;
             case '3':
-                await addPaper();
+                await manageSubjects();
                 break;
             case '4':
-                await reviewSubmissions();
+                await addPaper();
                 break;
             case '5':
-                await deployToGitHub();
+                await managePapers();
                 break;
             case '6':
+                await reviewSubmissions();
+                break;
+            case '7':
+                await deployToGitHub();
+                break;
+            case '8':
                 await cleanPending();
                 break;
             case '0':
