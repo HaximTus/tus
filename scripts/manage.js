@@ -830,8 +830,7 @@ async function main() {
         console.log('  [6] 查看待审核提交');
         console.log('  [7] 部署到 GitHub');
         console.log('  [8] 清理 pending 目录（已处理文件）');
-        console.log('  [0] 退出
-');
+        console.log('  [0] 退出\n');
 
         const choice = await question('请输入编号: ');
 
