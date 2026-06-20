@@ -101,9 +101,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 : '';
 
             var ext = (paper.file_name || rawPath).split('.').pop().toLowerCase();
-            var downloadName = paper.file_name || 'paper.' + (ext === 'doc' || ext === 'docx' ? 'docx' : 'pdf');
+            var isWord = ext === 'doc' || ext === 'docx';
+            var downloadName = paper.file_name || 'paper.' + (isWord ? 'docx' : 'pdf');
 
-            html += '<div class="paper-card bg-white rounded-xl shadow-sm p-5 border border-stone-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0"'
+            html += '<div class="paper-card bg-white rounded-xl shadow-sm p-5 border border-stone-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mx-2 sm:mx-0"'
                 + ' data-title="' + escapeAttr(paper.title) + '"'
                 + ' data-year="' + paper.year + '"'
                 + ' data-semester="' + escapeAttr(paper.semester) + '"'
@@ -111,7 +112,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 + ' data-filesize="' + fileSize + '"'
                 + ' data-uploader="' + escapeAttr(paper.uploaded_by || '匿名') + '"'
                 + ' data-url="' + escapeAttr(fileUrl) + '"'
-                + ' data-dlname="' + escapeAttr(downloadName) + '">'
+                + ' data-dlname="' + escapeAttr(downloadName) + '"'
+                + ' data-isword="' + (isWord ? '1' : '0') + '">'
                 + '<div class="flex-1 min-w-0">'
                 + '<h3 class="font-medium text-stone-800 mb-1.5">' + escapeHtml(paper.title) + '</h3>'
                 + '<div class="flex flex-wrap items-center gap-1.5 mb-1.5">' + semesterBadge + gradeBadge + '</div>'
@@ -140,7 +142,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         fileSize: card.dataset.filesize,
                         uploaded_by: card.dataset.uploader,
                         fileUrl: card.dataset.url,
-                        downloadName: card.dataset.dlname
+                        downloadName: card.dataset.dlname,
+                        isWord: card.dataset.isword === '1'
                     });
                 });
             })(cards[j]);
@@ -177,6 +180,11 @@ function showPaperDetail(paper) {
 
     var gradeRow = paper.grade ? '<div class="detail-row"><span class="detail-label">年级</span><span>' + escapeHtml(paper.grade) + '</span></div>' : '';
 
+    var previewUrl = paper.fileUrl;
+    if (paper.isWord) {
+        previewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(paper.fileUrl);
+    }
+
     overlay.innerHTML =
         '<div class="paper-detail-card">'
         + '<div class="detail-header">试卷信息</div>'
@@ -188,7 +196,8 @@ function showPaperDetail(paper) {
         + '<div class="detail-row"><span class="detail-label">大小</span><span>' + paper.fileSize + '</span></div>'
         + '<div class="detail-row"><span class="detail-label">上传者</span><span>' + escapeHtml(paper.uploaded_by || '匿名') + '</span></div>'
         + '</div>'
-        + '<div class="detail-footer">'
+        + '<div class="detail-footer detail-footer-triple">'
+        + '<a href="' + previewUrl + '" target="_blank" rel="noopener" class="detail-preview-btn">在线预览</a>'
         + '<a href="' + paper.fileUrl + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
         + '<button class="detail-close-btn">关闭</button>'
         + '</div>'
