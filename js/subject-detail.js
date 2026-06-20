@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             var isWord = ext === 'doc' || ext === 'docx';
             var downloadName = paper.file_name || 'paper.' + (isWord ? 'docx' : 'pdf');
 
-            html += '<div class="paper-card bg-white rounded-xl shadow-sm p-4 border border-stone-100 w-full"'
+            html += '<div class="paper-card bg-white rounded-xl shadow-sm p-4 border border-stone-100"'
                 + ' data-title="' + escapeAttr(paper.title) + '"'
                 + ' data-year="' + paper.year + '"'
                 + ' data-semester="' + escapeAttr(paper.semester) + '"'
