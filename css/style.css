@@ -33,6 +33,11 @@ main {
 .paper-card {
     transition: all 0.2s ease;
     cursor: pointer;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
 }
 .paper-card:active {
     background-color: #ede5dc;
@@ -45,12 +50,12 @@ main {
 
 /* 试卷标题截断淡出 */
 .paper-card h3 {
-    overflow: hidden;
-    white-space: nowrap;
-    max-width: 100%;
-    width: 100%;
-    -webkit-mask-image: linear-gradient(to right, black 55%, transparent 92%);
-    mask-image: linear-gradient(to right, black 55%, transparent 92%);
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    -webkit-mask-image: linear-gradient(to right, black 35%, transparent 75%) !important;
+    mask-image: linear-gradient(to right, black 35%, transparent 75%) !important;
 }
 
 /* 拖拽上传区高亮 */
