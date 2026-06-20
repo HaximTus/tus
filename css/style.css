@@ -47,8 +47,10 @@ main {
 .paper-card h3 {
     overflow: hidden;
     white-space: nowrap;
-    -webkit-mask-image: linear-gradient(to right, black 75%, transparent 98%);
-    mask-image: linear-gradient(to right, black 75%, transparent 98%);
+    max-width: 100%;
+    width: 100%;
+    -webkit-mask-image: linear-gradient(to right, black 55%, transparent 92%);
+    mask-image: linear-gradient(to right, black 55%, transparent 92%);
 }
 
 /* 拖拽上传区高亮 */
@@ -88,6 +90,8 @@ main {
 @media (max-width: 640px) {
     .text-3xl { font-size: 1.5rem; }
     .text-2xl { font-size: 1.25rem; }
+    main > .px-4, main { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+    .paper-card { padding: 0.625rem 0.75rem !important; }
 }
 
 /* 页脚置底 */
