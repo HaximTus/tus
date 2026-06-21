@@ -252,6 +252,13 @@
     color: #3d3430;
 }
 
+html.dark .nav-announcement {
+    color: #8a7e72;
+}
+html.dark .nav-announcement:hover {
+    color: #d6cec4;
+}
+
 /* —— 卡片滚动条 —— */
 .announcement-card::-webkit-scrollbar { width: 4px; }
 .announcement-card::-webkit-scrollbar-track { background: transparent; }
