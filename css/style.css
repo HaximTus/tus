@@ -489,6 +489,7 @@ main {
     height: 420px;
     max-height: 50vh;
     border-bottom: 1px solid #ece6de;
+    overflow-y: auto;
 }
 
 .preview-loading {
@@ -526,26 +527,18 @@ main {
     min-height: 0;
 }
 .word-container {
-    background: #525252;  /* 与 PDF 容器背景一致 */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 12px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    background: #525252;
+    overflow: hidden;
 }
 .word-container .docx-preview {
     background: #fff;
-    width: 100%;
-    max-width: 720px;
-    padding: 24px 20px;
-    margin: 0 0 4px 0;
+    width: 100% !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border-radius: 2px;
-    box-sizing: border-box;
     overflow-x: hidden;
     word-wrap: break-word;
+    padding: 18px 20px !important;   /* 覆盖 docx-preview 的 72pt */
+    margin: 0 0 6px 0 !important;   /* 覆盖 docx-preview 的 30px 底部间距 */
 }
 .word-container .docx-preview > * {
     max-width: 100% !important;
@@ -566,7 +559,6 @@ main {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    padding: 12px;
     overflow-y: auto;
 }
 .pdf-container .pdf-page {
