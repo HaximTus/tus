@@ -529,13 +529,26 @@ main {
     background: #fff;
     padding: 10px;
     overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
 }
 .word-container .docx-preview {
     padding: 0;
     margin: 0;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 .word-container .docx-preview > * {
-    max-width: 100%;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+.word-container .docx-preview table {
+    max-width: 100% !important;
+    word-break: break-word;
+}
+.word-container .docx-preview img {
+    max-width: 100% !important;
+    height: auto !important;
 }
 
 .pdf-container {
