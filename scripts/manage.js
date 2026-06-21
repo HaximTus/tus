@@ -463,10 +463,9 @@ async function handleSubmission(issue) {
         console.log(`    仓库路径: ${repoPath}`);
         const encodedPath = encodeURI(repoPath);
         const rawFileUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${encodedPath}`;
-        const previewUrl = `https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${encodedPath}`;
-        const ext = path.extname(repoPath).toLowerCase();
-        // Microsoft Office Online Viewer — 支持 PDF 和 Office 文档预览，中国内地可访问
-        console.log(`    🔗 在线预览: https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(previewUrl)}`);
+        // Microsoft Office Online Viewer — 支持 PDF 和 Office 文档预览
+        // 使用 raw.githubusercontent.com 作为源，微软服务器抓取文件，用户无需直连 GitHub
+        console.log(`    🔗 在线预览: https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawFileUrl)}`);
         console.log(`    🔗 原始下载: ${rawFileUrl}`);
     }
     if (pdfUrl) console.log(`    PDF链接: ${pdfUrl}`);
