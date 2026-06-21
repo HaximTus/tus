@@ -38,30 +38,39 @@ html.dark body::after {
     mix-blend-mode: screen;
 }
 
-/* 暗色模式手动切换按钮 */
+/* 暗色模式切换按钮 — 印章风格 */
 .dark-toggle {
-    background: none;
-    border: none;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid #b91c1c;
+    border-radius: 4px;
+    background: transparent;
     cursor: pointer;
-    font-size: 16px;
-    padding: 4px 6px;
-    border-radius: 6px;
-    color: #78716c;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Noto Serif SC', 'SimSun', serif;
+    color: #b91c1c;
+    padding: 0;
     transition: all 0.2s ease;
-    line-height: 1;
     touch-action: manipulation;
-}
-html.dark .dark-toggle {
-    color: #a8a29e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 @media (hover: hover) {
     .dark-toggle:hover {
-        color: #44403c;
-        background: rgba(68, 64, 60, 0.08);
+        background: rgba(185, 28, 28, 0.06);
+        transform: translateY(-1px);
     }
+}
+html.dark .dark-toggle {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+@media (hover: hover) {
     html.dark .dark-toggle:hover {
-        color: #f5f5f4;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(220, 38, 38, 0.1);
     }
 }
 
@@ -164,7 +173,7 @@ html.dark .hero-label {
 }
 html.dark .hero-label::before,
 html.dark .hero-label::after {
-    background: #d97706;
+    background: #eab308;
 }
 
 /* Hero 标签 */
@@ -186,7 +195,7 @@ html.dark .hero-label::after {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #d97706;
+    background: #ca8a04;
     display: inline-block;
 }
 
@@ -450,12 +459,12 @@ main {
 }
 
 .detail-download-btn {
-    background: #3d3430;
-    color: #f0ece6;
+    background: #ca8a04;
+    color: #292524;
 }
 .detail-download-btn:hover {
-    background: #5a5048;
-    color: #fff;
+    background: #a16207;
+    color: #1c1917;
 }
 
 .detail-close-btn {
@@ -503,11 +512,12 @@ html.dark .detail-preview-btn:hover {
     background: #4a4038;
 }
 html.dark .detail-download-btn {
-    background: #d97706;
-    color: #141210;
+    background: #eab308;
+    color: #292524;
 }
 html.dark .detail-download-btn:hover {
-    background: #f59e0b;
+    background: #facc15;
+    color: #1c1917;
 }
 html.dark .detail-close-btn {
     background: #3d3630;
