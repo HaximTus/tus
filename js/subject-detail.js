@@ -96,7 +96,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function renderPapers(papers) {
         if (papers.length === 0) {
-            papersContainer.innerHTML = '<div class="text-center py-10 text-stone-400">没有匹配的试卷</div>';
+            papersContainer.innerHTML = '<div class="text-center py-10">'
+                + '<div class="text-4xl mb-3 opacity-60">🔍</div>'
+                + '<p class="text-stone-500 font-medium">没有找到匹配的试卷</p>'
+                + '<p class="text-stone-400 text-sm mt-2">试试调整筛选条件</p>'
+                + '<a href="submit.html" class="inline-block mt-4 bg-amber-700 text-white px-5 py-2 rounded-lg hover:bg-amber-800 text-sm font-medium transition-colors">去提交新试卷</a>'
+                + '</div>';
             return;
         }
 
@@ -130,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 + ' data-url="' + escapeAttr(fileUrl) + '"'
                 + ' data-dlname="' + escapeAttr(downloadName) + '"'
                 + ' data-isword="' + (isWord ? '1' : '0') + '">'
-                + '<h3 class="font-medium text-stone-800">' + escapeHtml(paper.title) + '</h3>'
+                + '<h2 class="font-semibold text-stone-800 text-base">' + escapeHtml(paper.title) + '</h2>'
                 + '<div class="flex flex-wrap items-center gap-1.5 mt-1">' + yearBadge + semesterBadge + gradeBadge + '</div>'
                 + '</div>';
         }
@@ -138,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // 长标题跑马灯 — 轮询直到浏览器完成布局（Chrome 渲染太快 rAF 不够用）
         (function pollMarquee() {
-            var titles = papersContainer.querySelectorAll('.paper-card h3');
+            var titles = papersContainer.querySelectorAll('.paper-card h2');
             var allDone = true;
             for (var t = 0; t < titles.length; t++) {
                 (function(el) {
@@ -301,8 +306,4 @@ function escapeAttr(text) {
     return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function getBaseUrl() {
-    var path = window.location.pathname;
-    if (path.indexOf('/tus/') !== -1 || path === '/tus') return '/tus';
-    return '';
-}
+// getBaseUrl() 定义在 api-client.js 中
