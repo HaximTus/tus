@@ -272,8 +272,8 @@ function showPaperDetail(paper) {
         // 底部按钮
         + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
         + (isPdf
-            ? '<button class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(pdfPreviewUrl) + '">📖 在线预览</button>'
-            : '<a href="' + escapeAttr(officeUrl) + '" target="_blank" rel="noopener" class="detail-preview-btn">🔗 在线预览</a>')
+            ? '<button class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(pdfPreviewUrl) + '">在线预览</button>'
+            : '<a href="' + escapeAttr(officeUrl) + '" target="_blank" rel="noopener" class="detail-preview-btn">在线预览</a>')
         + '<a href="' + escapeAttr(originalUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
         + '<button class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
