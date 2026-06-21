@@ -223,16 +223,17 @@ function showPaperDetail(paper) {
         ? window.location.origin + originalUrl
         : originalUrl;
 
-    // 预览 URL
-    // PDF → preview.html（CDN 备降）；Word → Office Online Viewer
+    // 预览区
+    // PDF → iframe 加载 preview.html（CDN 备降）
+    // Word → 纯前端 docx-preview 渲染（不依赖外部服务）
     var previewUrl;
     var viewerHtml;
     if (isPdf) {
         previewUrl = 'preview.html?url=' + encodeURIComponent(absoluteUrl);
         viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank"></iframe>';
     } else {
-        previewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(absoluteUrl);
-        viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank" allowfullscreen></iframe>';
+        previewUrl = absoluteUrl;  // 直接用于 fetch 获取文件
+        viewerHtml = '<div class="word-container" id="wordContainer" style="display:none;overflow:auto;background:#fff;"></div>';
     }
 
     overlay.innerHTML =
@@ -321,25 +322,76 @@ function enterPreviewMode(overlay) {
     // 卡片切换到预览模式（样式放大）
     card.classList.add('preview-mode');
 
-    // 加载 iframe 预览
-    var iframe = overlay.querySelector('#previewIframe');
-    if (iframe) {
-        iframe.src = previewUrl;
-        iframe.onload = function() {
-            previewLoading.style.display = 'none';
-            iframe.style.display = '';
-        };
-    }
-
-    // 超时提示（退出预览时需清除）
-    var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
-    card._previewTimeoutId = setTimeout(function() {
-        if (previewLoading.style.display !== 'none') {
-            previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
-                + '加载较慢，试试 <a href="' + previewUrl + '" target="_blank" rel="noopener" style="color:#ca8a04;">在新标签页预览</a>'
-                + '<br>或 <a href="' + dlHref + '" download style="color:#ca8a04;">直接下载文件</a></p>';
+    if (isPdf) {
+        // PDF: iframe → preview.html（CDN 备降）
+        var iframe = overlay.querySelector('#previewIframe');
+        if (iframe) {
+            iframe.src = previewUrl;
+            iframe.onload = function() {
+                previewLoading.style.display = 'none';
+                iframe.style.display = '';
+            };
         }
-    }, 8000);
+        // 超时提示
+        card._previewTimeoutId = setTimeout(function() {
+            if (previewLoading.style.display !== 'none') {
+                previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;">加载较慢，试试 <a href="' + previewUrl + '" target="_blank" rel="noopener" style="color:#ca8a04;">在新标签页打开</a></p>';
+            }
+        }, 8000);
+    } else {
+        // Word: 纯前端 docx-preview 渲染
+        var wordContainer = overlay.querySelector('#wordContainer');
+        var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
+
+        // 动态加载 docx-preview 库（jsDelivr CDN，国内可访问）
+        if (typeof docx === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/docx-preview@0.3.0/dist/index.js';
+            script.onload = renderWord;
+            script.onerror = showWordFallback;
+            document.head.appendChild(script);
+        } else {
+            renderWord();
+        }
+
+        function renderWord() {
+            previewLoading.querySelector('p').textContent = '正在渲染文档...';
+            fetch(previewUrl)
+                .then(function(r) { return r.arrayBuffer(); })
+                .then(function(buffer) {
+                    return docx.renderAsync(buffer, wordContainer, null, {
+                        className: 'docx-preview',
+                        inWrapper: true,
+                        breakPages: false,
+                        ignoreWidth: false,
+                        ignoreHeight: false,
+                        renderMode: 'dual'
+                    });
+                })
+                .then(function() {
+                    previewLoading.style.display = 'none';
+                    wordContainer.style.display = '';
+                })
+                .catch(function(e) {
+                    console.warn('docx-preview 渲染失败:', e);
+                    showWordFallback();
+                });
+        }
+
+        function showWordFallback() {
+            previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
+                + '预览加载失败。<br>'
+                + '试试 <a href="' + dlHref + '" download style="color:#ca8a04;">下载文件</a>'
+                + ' 在本地打开</p>';
+        }
+
+        // docx-preview 渲染超时（15秒）
+        card._previewTimeoutId = setTimeout(function() {
+            if (previewLoading.style.display !== 'none') {
+                showWordFallback();
+            }
+        }, 15000);
+    }
 }
 
 function exitPreviewMode(overlay) {
@@ -354,9 +406,11 @@ function exitPreviewMode(overlay) {
         card._previewTimeoutId = null;
     }
 
-    // 停止 iframe 加载
+    // 停止加载
     var iframe = overlay.querySelector('#previewIframe');
     if (iframe) iframe.src = 'about:blank';
+    var wordContainer = overlay.querySelector('#wordContainer');
+    if (wordContainer) { wordContainer.style.display = 'none'; wordContainer.innerHTML = ''; }
 
     // 恢复头部文字
     header.textContent = '试卷信息';
@@ -375,7 +429,7 @@ function exitPreviewMode(overlay) {
             : downloadHref;
         var newPreviewUrl = isPdf
             ? 'preview.html?url=' + encodeURIComponent(absoluteUrl)
-            : 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(absoluteUrl);
+            : absoluteUrl;  // Word: 直接存文件 URL，enterPreviewMode 中用 fetch 获取
 
         var previewBtn = document.createElement('button');
         previewBtn.className = 'detail-preview-btn';
