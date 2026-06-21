@@ -466,15 +466,14 @@ async function handleSubmission(issue) {
         const encodedPath = encodeURI(repoPath);
         const rawFileUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${encodedPath}`;
         const ext = path.extname(repoPath).toLowerCase();
-        if (ext === '.pdf') {
-            // Tus 预览页 — PDF.js 从 CDN 拉取渲染，速度快、国内可访问
-            var cdnUrl = encodeURIComponent(`https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${encodedPath}`);
-            console.log(`    🔗 在线预览: https://${GITHUB_OWNER}.github.io/${GITHUB_REPO}/preview.html?url=${cdnUrl}`);
-        } else {
-            // Word/Office：Office Online Viewer 在线渲染
-            console.log(`    🔗 在线预览: https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawFileUrl)}`);
-        }
+        // Office Online Viewer — 支持 PDF 和 Office 文档在线预览
+        console.log(`    🔗 在线预览: https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawFileUrl)}`);
         console.log(`    🔗 原始下载: ${rawFileUrl}`);
+        // 备用：若 Office Viewer 不可用，可尝试 PDF.js 预览页
+        if (ext === '.pdf') {
+            var cdnUrl = encodeURIComponent(`https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${encodedPath}`);
+            console.log(`    🛠️ 备用预览: https://${GITHUB_OWNER}.github.io/${GITHUB_REPO}/preview.html?url=${cdnUrl}`);
+        }
     }
     if (pdfUrl) console.log(`    PDF链接: ${pdfUrl}`);
 
