@@ -2,7 +2,7 @@
 // 从静态 JSON 文件读取数据（GitHub Pages 部署）
 
 // 基础路径，用于 GitHub Pages 部署
-// 如果部署在 https://tjiux.github.io/tus/ 则 BASE_PATH 为 '/tus'
+// 如果部署在 https://HaximTus.github.io/tus/ 则 BASE_PATH 为 '/tus'
 // 如果是自定义域名或根目录部署则为 ''
 const BASE_PATH = '/tus';
 
