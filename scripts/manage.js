@@ -462,12 +462,11 @@ async function handleSubmission(issue) {
     if (repoPath) {
         console.log(`    仓库路径: ${repoPath}`);
         const encodedPath = encodeURI(repoPath);
-        const pagesUrl = `https://${GITHUB_OWNER}.github.io/${GITHUB_REPO}/${encodedPath}`;
         const rawFileUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${encodedPath}`;
         const ext = path.extname(repoPath).toLowerCase();
         if (ext === '.pdf') {
-            // PDF：GitHub Pages 直接渲染（浏览器内联显示）
-            console.log(`    🔗 在线预览: ${pagesUrl}`);
+            // jsDelivr CDN 预览（速度快，中国内地有节点）
+            console.log(`    🔗 在线预览: https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${encodedPath}`);
         } else {
             // Word/Office：Office Online Viewer 在线渲染
             console.log(`    🔗 在线预览: https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawFileUrl)}`);
