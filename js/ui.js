@@ -11,10 +11,10 @@
   function applyDark(isDark) {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      if (toggle) toggle.textContent = '☀️';
+      if (toggle) toggle.textContent = '亮';
     } else {
       document.documentElement.classList.remove('dark');
-      if (toggle) toggle.textContent = '🌙';
+      if (toggle) toggle.textContent = '暗';
     }
   }
 
