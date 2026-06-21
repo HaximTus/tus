@@ -6,6 +6,7 @@
     <title>Tus - 北工大试卷共享</title>
     <meta name="description" content="北京工业大学试卷共享平台 - 历年期中期末试题免费下载，涵盖高数、大物等各科目。Tus 让试卷自由流动。">
     <link rel="icon" href="favicon.svg">
+    <script>if(localStorage.getItem('tus_dark')==='1')document.documentElement.classList.add('dark')</script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/announcement.css">
@@ -38,11 +39,11 @@
 
         <!-- 年级筛选 -->
         <div class="mb-8 flex flex-wrap gap-2 justify-center" id="gradeFilter">
-            <button data-grade="" class="grade-btn active px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-stone-800 text-white border-stone-800 shadow-sm">全部</button>
-            <button data-grade="大一" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white text-stone-600 border-stone-200 hover:border-stone-400 hover:text-stone-700 shadow-sm">大一</button>
-            <button data-grade="大二" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white text-stone-600 border-stone-200 hover:border-stone-400 hover:text-stone-700 shadow-sm">大二</button>
-            <button data-grade="大三" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white text-stone-600 border-stone-200 hover:border-stone-400 hover:text-stone-700 shadow-sm">大三</button>
-            <button data-grade="大四" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white text-stone-600 border-stone-200 hover:border-stone-400 hover:text-stone-700 shadow-sm">大四</button>
+            <button data-grade="" class="grade-btn active px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-800 border-stone-800 dark:border-stone-200 shadow-sm">全部</button>
+            <button data-grade="大一" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-600 hover:border-stone-400 hover:text-stone-700 shadow-sm">大一</button>
+            <button data-grade="大二" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-600 hover:border-stone-400 hover:text-stone-700 shadow-sm">大二</button>
+            <button data-grade="大三" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-600 hover:border-stone-400 hover:text-stone-700 shadow-sm">大三</button>
+            <button data-grade="大四" class="grade-btn px-5 py-2.5 rounded-full text-sm font-medium border transition-all bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-600 hover:border-stone-400 hover:text-stone-700 shadow-sm">大四</button>
         </div>
 
         <!-- 科目网格 -->
