@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadData();
 });
 
-// ========== 试卷详情弹窗 ==========
+// ========== 试卷详情弹窗（内嵌预览） ==========
 function showPaperDetail(paper) {
     if (document.getElementById('paperDetailOverlay')) return;
 
@@ -215,18 +215,26 @@ function showPaperDetail(paper) {
     overlay.id = 'paperDetailOverlay';
 
     var gradeRow = paper.grade ? '<div class="detail-row"><span class="detail-label">年级</span><span class="detail-value">' + escapeHtml(paper.grade) + '</span></div>' : '';
-
-    var previewUrl = paper.fileUrl;
-    if (paper.isWord) {
-        previewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(paper.fileUrl);
-    }
-
     var setterRow = paper.setter ? '<div class="detail-row"><span class="detail-label">出卷人</span><span class="detail-value">' + escapeHtml(paper.setter) + '</span></div>' : '';
 
+    var originalUrl = paper.fileUrl;
+    var isPdf = !paper.isWord;
+    var previewUrl;
+    if (paper.isWord) {
+        previewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(originalUrl);
+    }
+
+    // 预览区 HTML（PDF 用 embed，Word 用 iframe）
+    var viewerHtml = isPdf
+        ? '<embed class="preview-embed" id="previewEmbed" type="application/pdf" src="about:blank">'
+        : '<iframe class="preview-iframe" id="previewIframe" src="about:blank" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>';
+
     overlay.innerHTML =
-        '<div class="paper-detail-card">'
-        + '<div class="detail-header">试卷信息</div>'
-        + '<div class="detail-body">'
+        '<div class="paper-detail-card" id="paperDetailCard">'
+        + '<div class="detail-header" id="detailHeader">试卷信息</div>'
+
+        // 信息区
+        + '<div class="detail-body" id="detailBody">'
         + '<div class="detail-row"><span class="detail-label">标题</span><span class="detail-value">' + escapeHtml(paper.title) + '</span></div>'
         + '<div class="detail-row"><span class="detail-label">年份</span><span class="detail-value">' + paper.year + '年</span></div>'
         + '<div class="detail-row"><span class="detail-label">学期</span><span class="detail-value">' + escapeHtml(paper.semester) + '</span></div>'
@@ -235,26 +243,158 @@ function showPaperDetail(paper) {
         + setterRow
         + '<div class="detail-row"><span class="detail-label">上传者</span><span class="detail-value">' + escapeHtml(paper.uploaded_by || '匿名') + '</span></div>'
         + '</div>'
-        + '<div class="detail-footer detail-footer-triple">'
-        + '<a href="' + previewUrl + '" target="_blank" rel="noopener" class="detail-preview-btn">在线预览</a>'
-        + '<a href="' + paper.fileUrl + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
-        + '<button class="detail-close-btn">关闭</button>'
+
+        // 预览区（初始隐藏）
+        + '<div class="preview-container" id="previewContainer" style="display:none">'
+        +   '<div class="preview-loading" id="previewLoading">'
+        +     '<div class="spinner"></div>'
+        +     '<p>正在加载预览...</p>'
+        +   '</div>'
+        +   viewerHtml
+        + '</div>'
+
+        // 底部按钮
+        + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
+        + '<button class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(isPdf ? originalUrl : previewUrl) + '" data-ispdf="' + (isPdf ? '1' : '0') + '">在线预览</button>'
+        + '<a href="' + escapeAttr(originalUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
+        + '<button class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
         + '</div>';
 
     overlay.addEventListener('click', function(e) {
         if (e.target === overlay) closePaperDetail(overlay);
     });
-    overlay.querySelector('.detail-close-btn').addEventListener('click', function() {
+
+    overlay.querySelector('#previewBtn').addEventListener('click', function() {
+        enterPreviewMode(overlay);
+    });
+
+    overlay.querySelector('#closeBtn').addEventListener('click', function() {
         closePaperDetail(overlay);
     });
 
     document.body.appendChild(overlay);
-    // 强制浏览器回流使 CSS 动画重新触发
     void overlay.offsetWidth;
 }
 
+function enterPreviewMode(overlay) {
+    var card = overlay.querySelector('#paperDetailCard');
+    var header = overlay.querySelector('#detailHeader');
+    var body = overlay.querySelector('#detailBody');
+    var previewContainer = overlay.querySelector('#previewContainer');
+    var previewLoading = overlay.querySelector('#previewLoading');
+    var previewBtn = overlay.querySelector('#previewBtn');
+
+    // 获取预览参数
+    var previewUrl = previewBtn.dataset.previewurl || '';
+    var isPdf = previewBtn.dataset.ispdf === '1';
+
+    // 切换头部文字
+    header.textContent = '预览';
+
+    // 隐藏信息区，显示预览区
+    body.style.display = 'none';
+    previewContainer.style.display = '';
+    previewLoading.style.display = '';
+
+    // 预览按钮 → 返回按钮
+    var backBtn = document.createElement('button');
+    backBtn.className = 'detail-back-btn';
+    backBtn.id = 'previewBtn';
+    backBtn.textContent = '← 返回详情';
+    backBtn.addEventListener('click', function() {
+        exitPreviewMode(overlay);
+    });
+    previewBtn.parentNode.replaceChild(backBtn, previewBtn);
+
+    // 卡片切换到预览模式（样式放大）
+    card.classList.add('preview-mode');
+
+    // 加载预览内容
+    var viewer = isPdf
+        ? overlay.querySelector('#previewEmbed')
+        : overlay.querySelector('#previewIframe');
+
+    if (viewer) {
+        viewer.style.display = 'none';
+        viewer.src = previewUrl;
+        viewer.onload = function() {
+            previewLoading.style.display = 'none';
+            viewer.style.display = '';
+        };
+        // embed 的 onload 可能不触发，用超时兜底
+        if (isPdf) {
+            setTimeout(function() {
+                if (previewLoading.style.display !== 'none') {
+                    previewLoading.style.display = 'none';
+                    viewer.style.display = '';
+                }
+            }, 2000);
+        }
+    }
+
+    // 超时提示（退出预览时需清除）
+    card._previewTimeoutId = setTimeout(function() {
+        if (previewLoading.style.display !== 'none') {
+            previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;">加载较慢，试试 <a href="' + previewUrl + '" target="_blank" rel="noopener" style="color:#ca8a04;">在新标签页打开</a></p>';
+        }
+    }, 8000);
+}
+
+function exitPreviewMode(overlay) {
+    var card = overlay.querySelector('#paperDetailCard');
+    var header = overlay.querySelector('#detailHeader');
+    var body = overlay.querySelector('#detailBody');
+    var previewContainer = overlay.querySelector('#previewContainer');
+
+    // 清除加载超时
+    if (card._previewTimeoutId) {
+        clearTimeout(card._previewTimeoutId);
+        card._previewTimeoutId = null;
+    }
+
+    // 停止加载
+    var embed = overlay.querySelector('#previewEmbed');
+    var iframe = overlay.querySelector('#previewIframe');
+    if (embed) embed.src = 'about:blank';
+    if (iframe) iframe.src = 'about:blank';
+
+    // 恢复头部文字
+    header.textContent = '试卷信息';
+
+    // 显示信息区，隐藏预览区
+    body.style.display = '';
+    previewContainer.style.display = 'none';
+
+    // 返回按钮 → 预览按钮
+    var backBtn = overlay.querySelector('#previewBtn');
+    var downloadHref = card.querySelector('.detail-download-btn').getAttribute('href');
+    var isWord = /\.docx?$/i.test(downloadHref);
+    var previewUrl = isWord
+        ? 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(downloadHref)
+        : downloadHref;  // PDF 直接用原 URL
+
+    var previewBtn = document.createElement('button');
+    previewBtn.className = 'detail-preview-btn';
+    previewBtn.id = 'previewBtn';
+    previewBtn.dataset.previewurl = previewUrl;
+    previewBtn.dataset.ispdf = isWord ? '0' : '1';
+    previewBtn.textContent = '在线预览';
+    previewBtn.addEventListener('click', function() {
+        enterPreviewMode(overlay);
+    });
+    backBtn.parentNode.replaceChild(previewBtn, backBtn);
+
+    // 移除预览样式
+    card.classList.remove('preview-mode');
+}
+
 function closePaperDetail(overlay) {
+    var card = overlay.querySelector('#paperDetailCard');
+    if (card && card._previewTimeoutId) {
+        clearTimeout(card._previewTimeoutId);
+        card._previewTimeoutId = null;
+    }
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.25s ease';
     setTimeout(function() {
