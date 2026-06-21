@@ -245,6 +245,8 @@ function showPaperDetail(paper) {
     });
 
     document.body.appendChild(overlay);
+    // 强制浏览器回流使 CSS 动画重新触发
+    void overlay.offsetWidth;
 }
 
 function closePaperDetail(overlay) {
@@ -266,10 +268,11 @@ function startMarquee(el) {
     el._marqueeActive = true;
     el.scrollLeft = 0;
 
-    var speed = 0.6;
+    var speed = 1;
     var dir = 1;
     var paused = false;
     var PAUSE_MS = 2000; // 两端暂停 2 秒
+    var TICK_MS = 26;    // ~38fps，配合 speed=1 达到约 38px/s，避免小数像素问题
 
     function tick() {
         if (!el._marqueeActive || !el.isConnected) { clearInterval(el._marqueeTimer); return; }
@@ -288,7 +291,7 @@ function startMarquee(el) {
         }
     }
 
-    el._marqueeTimer = setInterval(tick, 16); // ~60fps
+    el._marqueeTimer = setInterval(tick, TICK_MS);
 }
 
 function formatFileSize(bytes) {
