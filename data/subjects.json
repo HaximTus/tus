@@ -25,7 +25,7 @@
     },
     {
         "id": 4,
-        "name": "线性代数",
+        "name": "线性代数-都柏林",
         "grade": "大一",
         "teacher": "",
         "description": "",
@@ -33,7 +33,15 @@
     },
     {
         "id": 5,
-        "name": "爱尔兰文化",
+        "name": "爱尔兰文化-都柏林",
+        "grade": "大一",
+        "teacher": "",
+        "description": "",
+        "created_at": "2026-06-21"
+    },
+    {
+        "id": 6,
+        "name": "程序设计概论-都柏林",
         "grade": "大一",
         "teacher": "",
         "description": "",
