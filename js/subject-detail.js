@@ -95,6 +95,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderPapers(papers) {
+        // 清理旧跑马灯动画
+        var oldTitles = papersContainer.querySelectorAll('.paper-card h2');
+        for (var ot = 0; ot < oldTitles.length; ot++) stopMarquee(oldTitles[ot]);
         if (papers.length === 0) {
             papersContainer.innerHTML = '<div class="text-center py-10">'
                 + '<div class="text-4xl mb-3 opacity-60">🔍</div>'
@@ -135,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 + ' data-url="' + escapeAttr(fileUrl) + '"'
                 + ' data-dlname="' + escapeAttr(downloadName) + '"'
                 + ' data-isword="' + (isWord ? '1' : '0') + '">'
-                + '<h2 class="font-semibold text-stone-800 text-base">' + escapeHtml(paper.title) + '</h2>'
+                + '<h2 class="font-semibold text-stone-800 text-base"><span class="marquee-inner">' + escapeHtml(paper.title) + '</span></h2>'
                 + '<div class="flex flex-wrap items-center gap-1.5 mt-1">' + yearBadge + semesterBadge + gradeBadge + '</div>'
                 + '</div>';
         }
@@ -259,40 +262,56 @@ function closePaperDetail(overlay) {
     }, 250);
 }
 
-// ========== 跑马灯滚动（scrollLeft + mask 遮罩固定不动） ==========
+// ========== 跑马灯滚动（Web Animations API + translateX，GPU 加速 60fps） ==========
 function startMarquee(el) {
     if (el._marqueeActive) return;
+
+    var inner = el.querySelector('.marquee-inner');
+    if (!inner) return;
+
     var maxPossible = el.scrollWidth - el.clientWidth;
-    var maxScroll = Math.ceil(el.scrollWidth - el.clientWidth * 0.93);
-    if (maxScroll > maxPossible) maxScroll = maxPossible;
-    if (maxScroll <= 1) return;
+    var scrollFade = Math.ceil(el.scrollWidth - el.clientWidth * 0.93);
+    if (scrollFade > maxPossible) scrollFade = maxPossible;
+    if (scrollFade <= 1) return;
 
     el._marqueeActive = true;
-    el.scrollLeft = 0;
 
-    var speed = 0.7;
-    var dir = 1;
-    var paused = false;
-    var PAUSE_MS = 2000; // 两端暂停 2 秒
+    // 根据滚动距离计算总时长：45px/s 滚动 + 两端各停 2s
+    var SCROLL_SPEED = 45; // px/s
+    var PAUSE = 2000;
+    var scrollTime = (scrollFade / SCROLL_SPEED) * 1000; // ms
+    var totalTime = scrollTime * 2 + PAUSE * 2;
 
-    function tick() {
-        if (!el._marqueeActive || !el.isConnected) { clearInterval(el._marqueeTimer); return; }
-        if (paused) return;
+    // 精确 keyframe 偏移：停→滚→停→滚
+    var pPause1 = 0;
+    var pEnd1   = PAUSE / totalTime;
+    var pEnd2   = (PAUSE + scrollTime) / totalTime;
+    var pEnd3   = (PAUSE + scrollTime + PAUSE) / totalTime;
 
-        el.scrollLeft += speed * dir;
+    var distPx = -scrollFade + 'px';
 
-        if (dir === 1 && el.scrollLeft >= maxScroll) {
-            el.scrollLeft = maxScroll;
-            paused = true;
-            setTimeout(function() { paused = false; dir = -1; }, PAUSE_MS);
-        } else if (dir === -1 && el.scrollLeft <= 0) {
-            el.scrollLeft = 0;
-            paused = true;
-            setTimeout(function() { paused = false; dir = 1; }, PAUSE_MS);
-        }
+    var anim = inner.animate([
+        { transform: 'translateX(0)',        offset: pPause1 },
+        { transform: 'translateX(0)',        offset: pEnd1   },
+        { transform: 'translateX(' + distPx + ')', offset: pEnd2   },
+        { transform: 'translateX(' + distPx + ')', offset: pEnd3   },
+        { transform: 'translateX(0)',        offset: 1        }
+    ], {
+        duration: totalTime,
+        iterations: Infinity,
+        easing: 'linear'
+    });
+
+    el._marqueeAnim = anim;
+}
+
+// 清理跑马灯（在重新渲染时调用）
+function stopMarquee(el) {
+    if (el._marqueeAnim) {
+        el._marqueeAnim.cancel();
+        el._marqueeAnim = null;
     }
-
-    el._marqueeTimer = setInterval(tick, 16);
+    el._marqueeActive = false;
 }
 
 function formatFileSize(bytes) {
