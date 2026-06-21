@@ -1,13 +1,13 @@
-/* Tus - 公告样式 */
+/* Tus - 公告样式（学者来信 · 朱砂印章） */
 
 /* —— 遮罩层 —— */
 .announcement-overlay {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: rgba(30, 26, 22, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(20, 18, 16, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -20,18 +20,18 @@
     to   { opacity: 1; }
 }
 
-/* —— 卡片 —— */
+/* —— 卡片：信纸 —— */
 .announcement-card {
-    background: #fcfaf7;
+    background: #faf6f0;
     max-width: 620px;
     width: 100%;
     max-height: 82vh;
     overflow-y: auto;
-    border-radius: 18px;
+    border-radius: 16px;
     box-shadow:
-        0 24px 80px rgba(0, 0, 0, 0.18),
-        0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-    padding: 48px 48px 36px;
+        0 24px 80px rgba(0, 0, 0, 0.2),
+        0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    padding: 52px 52px 36px;
     position: relative;
     animation: card-slide-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -41,40 +41,98 @@
     to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* —— 顶部装饰线 —— */
-.announcement-card::before {
-    content: '';
+/* —— 正文：楷体书信 —— */
+.announcement-body {
+    position: relative;
+    z-index: 1;
+    font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+}
+
+/* 水印暗纹 */
+.announcement-body::before {
+    content: 'Tus';
     position: absolute;
-    top: 0;
-    left: 48px;
-    right: 48px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #b8a088, transparent);
-    border-radius: 0 0 2px 2px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 140px;
+    font-weight: 700;
+    color: rgba(180, 160, 140, 0.08);
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 24px;
+    pointer-events: none;
+    z-index: 0;
+    user-select: none;
 }
 
-/* —— 标题区 —— */
-.announcement-header {
-    text-align: center;
-    margin-bottom: 28px;
+/* —— 标题行（日期 + 标题 + 印章同一行） —— */
+.announcement-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 22px;
     padding-bottom: 22px;
-    border-bottom: 1px solid #ece6de;
+    border-bottom: 1px solid #e8ddd0;
+    position: relative;
+    z-index: 1;
 }
 
+/* —— 朱砂印章 —— */
+.announcement-seal {
+    width: 34px;
+    height: 34px;
+    border: 2px solid #b91c1c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'STXingkai', 'KaiTi', 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #b91c1c;
+    letter-spacing: 0;
+    animation: seal-fade-in 0.6s ease 0.3s both;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes seal-fade-in {
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* —— 日期 —— */
 .announcement-date {
+    text-align: center;
     font-size: 12px;
     color: #9e9488;
     letter-spacing: 3px;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
+    font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
+    position: relative;
+    z-index: 1;
+}
+
+/* —— 标题 —— */
+.announcement-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #3d3430;
+    letter-spacing: 12px;
     font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
 }
 
-.announcement-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #3d3430;
-    letter-spacing: 10px;
-    font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
+.announcement-title .dot {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background: #b91c1c;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin: 0 4px;
+    opacity: 0.6;
 }
 
 /* —— 正文 —— */
@@ -83,6 +141,8 @@
     line-height: 2;
     color: #4a4038;
     font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
+    position: relative;
+    z-index: 1;
 }
 
 .announcement-body p {
@@ -91,7 +151,7 @@
 }
 
 .announcement-body a {
-    color: #9a7b4a;
+    color: #8b6f4c;
     text-decoration: underline;
     text-underline-offset: 2px;
     text-decoration-color: #d0c0a8;
@@ -99,36 +159,64 @@
 }
 
 .announcement-body a:hover {
-    color: #7a5f38;
+    color: #6d5538;
 }
 
-/* —— 落款 —— */
-.announcement-signature {
-    text-align: right;
+/* —— 落款 + 方章 —— */
+.announcement-signature-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     margin-top: 28px;
     padding-top: 18px;
+    border-top: 1px dashed #e0d8d0;
+    position: relative;
+    z-index: 1;
+}
+
+.announcement-signature {
     color: #7a7068;
     letter-spacing: 2px;
-    border-top: 1px dashed #e0d8d0;
     font-family: 'Noto Serif SC', 'STKaiti', serif;
     font-style: italic;
     font-size: 14px;
 }
 
+/* 个人方章 */
+.announcement-stamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #b91c1c;
+    border-radius: 3px;
+    margin-left: 8px;
+    flex-shrink: 0;
+    opacity: 0.8;
+    font-size: 11px;
+    font-weight: 700;
+    color: #b91c1c;
+    font-family: 'STXingkai', 'KaiTi', 'Noto Serif SC', serif;
+    line-height: 1;
+}
+
 /* —— 按钮区 —— */
 .announcement-footer {
     text-align: center;
-    margin-top: 28px;
+    margin-top: 32px;
+    position: relative;
+    z-index: 1;
 }
 
 .announcement-btn {
     display: inline-block;
-    padding: 10px 56px;
-    background: #3d3430;
-    color: #f0ece6;
-    border: none;
+    padding: 10px 48px;
+    background: transparent;
+    color: #5a5048;
+    border: 1px solid #d0c8be;
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 14px;
     letter-spacing: 6px;
     cursor: pointer;
     transition: all 0.25s ease;
@@ -137,10 +225,11 @@
 }
 
 .announcement-btn:hover {
-    background: #5a5048;
-    color: #fff;
+    background: #3d3430;
+    color: #f0ece6;
+    border-color: #3d3430;
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(61, 52, 48, 0.2);
+    box-shadow: 0 4px 16px rgba(61, 52, 48, 0.15);
 }
 
 .announcement-btn:active {
@@ -176,29 +265,98 @@
 .announcement-card::-webkit-scrollbar-track { background: transparent; }
 .announcement-card::-webkit-scrollbar-thumb { background: #d0c8be; border-radius: 2px; }
 
+/* ========== 暗色模式 ========== */
+html.dark .announcement-overlay {
+    background: rgba(10, 8, 6, 0.65);
+}
+html.dark .announcement-card {
+    background: #2d2824;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+html.dark .announcement-body::before {
+    color: rgba(255, 255, 255, 0.03);
+}
+html.dark .announcement-seal {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+html.dark .announcement-title {
+    color: #ece6de;
+}
+html.dark .announcement-title .dot {
+    background: #dc2626;
+}
+html.dark .announcement-header-row {
+    border-bottom-color: #3d3630;
+}
+html.dark .announcement-body {
+    color: #d6cec4;
+}
+html.dark .announcement-body a {
+    color: #a08060;
+}
+html.dark .announcement-body a:hover {
+    color: #c0a080;
+}
+html.dark .announcement-signature-wrapper {
+    border-top-color: #3d3630;
+}
+html.dark .announcement-signature {
+    color: #8a7e72;
+}
+html.dark .announcement-stamp {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+html.dark .announcement-btn {
+    color: #a69a8e;
+    border-color: #4a4038;
+}
+html.dark .announcement-btn:hover {
+    background: #ece6de;
+    color: #1c1917;
+    border-color: #ece6de;
+}
+
 /* ========== 平板 / 手机 ========== */
 @media (max-width: 640px) {
     .announcement-overlay { padding: 12px; }
 
     .announcement-card {
-        padding: 32px 24px 28px;
+        padding: 36px 24px 28px;
         border-radius: 14px;
         max-height: 86vh;
     }
 
-    .announcement-card::before {
-        left: 24px;
-        right: 24px;
+    .announcement-seal {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+        border-width: 1.5px;
+    }
+
+    .announcement-header-row {
+        gap: 8px;
     }
 
     .announcement-title {
-        font-size: 22px;
+        font-size: 20px;
         letter-spacing: 6px;
+    }
+
+    .announcement-title .dot {
+        width: 3px;
+        height: 3px;
+        margin: 0 3px;
     }
 
     .announcement-body {
         font-size: 14px;
         line-height: 1.9;
+    }
+    .announcement-body::before {
+        font-size: 80px;
+        letter-spacing: 12px;
     }
 
     .announcement-body p {
@@ -206,8 +364,14 @@
     }
 
     .announcement-btn {
-        padding: 10px 40px;
+        padding: 10px 36px;
         letter-spacing: 4px;
         width: 100%;
+    }
+
+    .announcement-stamp {
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
     }
 }
