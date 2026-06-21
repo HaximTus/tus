@@ -14,23 +14,69 @@
             font-size: 13px; display: flex; align-items: center;
             flex-shrink: 0;
         }
+        .bar .status { color: #8a7e72; font-size: 12px; margin-left: 12px; }
         .bar a { color: #facc15; text-decoration: none; margin-left: auto; font-size: 13px; }
         .bar a:hover { text-decoration: underline; }
+        .loading {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            color: #a69a8e; font-family: 'Noto Serif SC', serif; font-size: 15px;
+        }
+        .loading .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid #4a4038; border-top-color: #facc15;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="bar">
-        Tus · PDF 预览
+        <span>Tus · PDF 预览</span>
+        <span class="status" id="status">正在加载…</span>
         <a href="#" id="downloadLink" target="_blank">📥 下载</a>
     </div>
-    <embed id="pdfViewer" type="application/pdf">
+    <div id="viewerPlaceholder" class="loading">
+        <div class="spinner"></div>
+        <span>正在从 CDN 获取文件…</span>
+    </div>
+    <embed id="pdfViewer" type="application/pdf" style="display:none;">
+
     <script>
+    (function() {
         var params = new URLSearchParams(location.search);
-        var url = params.get('url');
-        if (url) {
-            document.getElementById('pdfViewer').src = url;
-            document.getElementById('downloadLink').href = url;
+        var fileUrl = params.get('url');
+        if (!fileUrl) {
+            document.getElementById('status').textContent = '❌ 缺少参数';
+            return;
         }
+
+        document.getElementById('status').textContent = '⏬ 下载中…';
+        document.getElementById('downloadLink').href = fileUrl;
+
+        // 用 fetch 下载文件（自动处理重定向），转成 blob URL 传给 embed
+        fetch(fileUrl)
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                document.getElementById('status').textContent = '📄 渲染中…';
+                return res.blob();
+            })
+            .then(function(blob) {
+                var pdfBlob = new Blob([blob], { type: 'application/pdf' });
+                var blobUrl = URL.createObjectURL(pdfBlob);
+                var embed = document.getElementById('pdfViewer');
+                embed.src = blobUrl;
+                embed.style.display = '';
+                document.getElementById('viewerPlaceholder').style.display = 'none';
+                document.getElementById('status').textContent = '✅ 就绪';
+            })
+            .catch(function(err) {
+                document.getElementById('viewerPlaceholder').innerHTML =
+                    '❌ 加载失败：' + err.message +
+                    '，<a href="' + fileUrl + '" target="_blank" style="color:#facc15;margin-left:6px;">直接打开文件</a>';
+                document.getElementById('status').textContent = '❌ 失败';
+            });
+    })();
     </script>
 </body>
 </html>
