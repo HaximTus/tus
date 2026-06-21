@@ -150,7 +150,7 @@
 /* —— 导航栏公告入口 —— */
 .nav-announcement {
     font-size: 12px;
-    color: #a09888;
+    color: #7a7068;
     cursor: pointer;
     transition: color 0.2s ease;
     text-decoration: none;
@@ -159,10 +159,16 @@
     align-items: center;
     gap: 3px;
     user-select: none;
+    padding: 6px 4px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .nav-announcement:hover {
-    color: #5a5048;
+    color: #3d3430;
+}
+
+.nav-announcement:active {
+    color: #3d3430;
 }
 
 /* —— 卡片滚动条 —— */
