@@ -232,7 +232,7 @@ function showPaperDetail(paper) {
         viewerHtml = '<div class="pdf-container" id="pdfContainer"></div>';
     } else {
         previewUrl = absoluteUrl;  // 用于 fetch 获取文件
-        viewerHtml = '<div class="word-container" id="wordContainer" style="display:none;overflow:auto;background:#fff;"></div>';
+        viewerHtml = '<div class="word-container" id="wordContainer" style="display:none;"></div>';
     }
 
     overlay.innerHTML =
@@ -429,10 +429,14 @@ function enterPreviewMode(overlay) {
                 .then(function() {
                     previewLoading.style.display = 'none';
                     wordContainer.style.display = '';
-                    // 强制 docx-preview 填满容器宽度
-                    var dp = wordContainer.querySelector('.docx-preview');
-                    if (dp && dp.offsetWidth < wordContainer.clientWidth - 1) {
-                        dp.style.setProperty('width', wordContainer.clientWidth + 'px', 'important');
+                    // 清理 docx-preview 注入的 style 标签（它们会导致多余间距）
+                    var sins = wordContainer.querySelectorAll('style');
+                    for (var si = 0; si < sins.length; si++) sins[si].remove();
+                    // 统一宽度，留出侧边距（与 PDF 风格一致）
+                    var wsz = wordContainer.querySelectorAll('.docx-preview-wrapper, .docx-preview');
+                    for (var wi = 0; wi < wsz.length; wi++) {
+                        wsz[wi].style.setProperty('margin', '0', 'important');
+                        wsz[wi].style.setProperty('width', (wordContainer.clientWidth - 16) + 'px', 'important');
                     }
                 })
                 .catch(function(e) {
