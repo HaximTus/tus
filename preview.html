@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>PDF 预览 - Tus</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            display: flex; flex-direction: column; height: 100vh;
+            background: #525252;
+            font-family: 'Noto Serif SC', 'SimSun', serif;
+            color: #d6cec4;
+        }
+        .bar {
+            background: #292524;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .bar a {
+            color: #facc15;
+            text-decoration: none;
+            margin-left: auto;
+            font-size: 13px;
+        }
+        .bar a:hover { text-decoration: underline; }
+        .bar .info { color: #8a7e72; font-size: 12px; }
+        #viewer {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            gap: 12px;
+        }
+        #viewer canvas {
+            display: block;
+            max-width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: white;
+        }
+        .loading, .error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            font-size: 15px;
+            color: #a69a8e;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #4a4038;
+            border-top-color: #facc15;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error a { color: #facc15; margin-left: 6px; }
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+        .page-controls button {
+            background: #44403c;
+            border: none;
+            color: #d6cec4;
+            padding: 4px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .page-controls button:hover { background: #5a5048; }
+        .page-controls button:disabled { opacity: 0.4; cursor: default; }
+        .page-controls span { font-size: 13px; }
+        @media (max-width: 640px) {
+            .bar { padding: 8px 12px; font-size: 12px; }
+            #viewer { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bar">
+        <span>Tus · PDF 预览</span>
+        <span class="info" id="pageInfo"></span>
+        <a href="#" id="downloadLink" target="_blank">📥 下载原文件</a>
+    </div>
+    <div id="viewer">
+        <div class="loading" id="loadingMsg">
+            <div class="spinner"></div>
+            正在加载 PDF…
+        </div>
+    </div>
+
+    <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    var params = new URLSearchParams(location.search);
+    var fileUrl = params.get('url');
+    var pageNum = 1;
+    var pdfDoc = null;
+    var scale = 1.0;
+
+    var viewer = document.getElementById('viewer');
+    var loadingMsg = document.getElementById('loadingMsg');
+    var pageInfo = document.getElementById('pageInfo');
+
+    if (!fileUrl) {
+        loadingMsg.className = 'error';
+        loadingMsg.textContent = '❌ 缺少文件链接参数';
+        return;
+    }
+
+    document.getElementById('downloadLink').href = fileUrl;
+
+    function renderPage(num) {
+        if (!pdfDoc) return;
+        pdfDoc.getPage(num).then(function(page) {
+            var viewport = page.getViewport({ scale: scale });
+            var canvas = document.createElement('canvas');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            var old = viewer.querySelector('canvas');
+            if (old) old.remove();
+            viewer.appendChild(canvas);
+            // 保持翻页控件在最上面
+            var controls = document.getElementById('pageControls');
+            if (controls) viewer.insertBefore(controls, canvas);
+
+            var ctx = canvas.getContext('2d');
+            page.render({ canvasContext: ctx, viewport: viewport });
+            pageInfo.textContent = '第 ' + num + ' / ' + pdfDoc.numPages + ' 页';
+        });
+    }
+
+    pdfjsLib.getDocument(fileUrl).promise.then(function(doc) {
+        pdfDoc = doc;
+        loadingMsg.style.display = 'none';
+
+        // 翻页控件
+        if (doc.numPages > 1) {
+            var controls = document.createElement('div');
+            controls.id = 'pageControls';
+            controls.className = 'page-controls';
+            controls.innerHTML =
+                '<button id="prevPage">← 上一页</button>' +
+                '<span>' + pageNum + ' / ' + doc.numPages + '</span>' +
+                '<button id="nextPage">下一页 →</button>';
+            viewer.prepend(controls);
+
+            document.getElementById('prevPage').addEventListener('click', function() {
+                if (pageNum <= 1) return;
+                pageNum--;
+                renderPage(pageNum);
+                document.getElementById('pageControls').querySelector('span').textContent = pageNum + ' / ' + pdfDoc.numPages;
+            });
+            document.getElementById('nextPage').addEventListener('click', function() {
+                if (pageNum >= pdfDoc.numPages) return;
+                pageNum++;
+                renderPage(pageNum);
+                document.getElementById('pageControls').querySelector('span').textContent = pageNum + ' / ' + pdfDoc.numPages;
+            });
+        }
+
+        renderPage(1);
+    }).catch(function(err) {
+        loadingMsg.className = 'error';
+        loadingMsg.innerHTML = '❌ 加载失败：' + err.message +
+            '，<a href="' + fileUrl + '" target="_blank">直接打开文件</a>';
+    });
+    </script>
+</body>
+</html>
