@@ -421,9 +421,9 @@ function enterPreviewMode(overlay) {
                         className: 'docx-preview',
                         inWrapper: true,
                         breakPages: false,
-                        ignoreWidth: false,
-                        ignoreHeight: false,
-                        renderMode: 'dual'
+                        ignoreWidth: true,   // 忽略文档固定宽度，自适应容器
+                        ignoreHeight: true,  // 忽略文档固定高度
+                        renderMode: 'single-page'
                     });
                 })
                 .then(function() {
