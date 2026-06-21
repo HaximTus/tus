@@ -62,6 +62,7 @@ body {
 .paper-card {
     transition: all 0.25s ease;
     cursor: pointer;
+    touch-action: manipulation;
 }
 .paper-card:active {
     background-color: #ede5dc;
