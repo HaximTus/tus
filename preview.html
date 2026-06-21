@@ -12,70 +12,103 @@
             background: #292524; color: #d6cec4;
             padding: 10px 18px; font-family: 'Noto Serif SC', 'SimSun', serif;
             font-size: 13px; display: flex; align-items: center;
-            flex-shrink: 0;
+            flex-shrink: 0; gap: 12px;
         }
-        .bar .status { color: #8a7e72; font-size: 12px; margin-left: 12px; }
+        .bar .status { color: #8a7e72; font-size: 12px; }
         .bar a { color: #facc15; text-decoration: none; margin-left: auto; font-size: 13px; }
         .bar a:hover { text-decoration: underline; }
         .loading {
-            flex: 1; display: flex; align-items: center; justify-content: center;
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 16px;
             color: #a69a8e; font-family: 'Noto Serif SC', serif; font-size: 15px;
         }
         .loading .spinner {
-            width: 24px; height: 24px;
+            width: 32px; height: 32px;
             border: 3px solid #4a4038; border-top-color: #facc15;
             border-radius: 50%; animation: spin 0.8s linear infinite;
-            margin-right: 12px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .loading .src-label { font-size: 12px; color: #78716c; }
     </style>
 </head>
 <body>
     <div class="bar">
         <span>Tus · PDF 预览</span>
-        <span class="status" id="status">正在加载…</span>
+        <span class="status" id="status">准备中…</span>
         <a href="#" id="downloadLink" target="_blank">📥 下载</a>
     </div>
-    <div id="viewerPlaceholder" class="loading">
+    <div id="viewerWrap" class="loading">
         <div class="spinner"></div>
-        <span>正在从 CDN 获取文件…</span>
+        <span id="loadMsg">正在加载…</span>
+        <span class="src-label" id="srcLabel"></span>
     </div>
     <embed id="pdfViewer" type="application/pdf" style="display:none;">
 
     <script>
     (function() {
         var params = new URLSearchParams(location.search);
-        var fileUrl = params.get('url');
-        if (!fileUrl) {
+        var ghUrl = params.get('url');
+        if (!ghUrl) {
             document.getElementById('status').textContent = '❌ 缺少参数';
             return;
         }
 
-        document.getElementById('status').textContent = '⏬ 下载中…';
-        document.getElementById('downloadLink').href = fileUrl;
+        document.getElementById('downloadLink').href = ghUrl;
 
-        // 用 fetch 下载文件（自动处理重定向），转成 blob URL 传给 embed
-        fetch(fileUrl)
-            .then(function(res) {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                document.getElementById('status').textContent = '📄 渲染中…';
-                return res.blob();
-            })
-            .then(function(blob) {
+        // 从 GitHub Pages URL 推导 jsDelivr URL
+        // ghUrl: https://HaximTus.github.io/tus/assets/papers/pending/file.pdf
+        // jsdUrl: https://cdn.jsdelivr.net/gh/HaximTus/tus@main/assets/papers/pending/file.pdf
+        var match = ghUrl.match(/https:\/\/([^\/]+)\.github\.io\/([^\/]+)\/(.+)/);
+        var jsdUrl = null;
+        if (match) {
+            jsdUrl = 'https://cdn.jsdelivr.net/gh/' + match[1] + '/' + match[2] + '@main/' + match[3];
+        }
+
+        var statusEl = document.getElementById('status');
+        var loadMsg = document.getElementById('loadMsg');
+        var srcLabel = document.getElementById('srcLabel');
+
+        function loadFrom(url, label) {
+            statusEl.textContent = '⏬ ' + label;
+            loadMsg.textContent = '正在从 ' + label + ' 获取…';
+            srcLabel.textContent = url;
+
+            return fetch(url, { redirect: 'follow' }).then(function(resp) {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.blob();
+            }).then(function(blob) {
                 var pdfBlob = new Blob([blob], { type: 'application/pdf' });
                 var blobUrl = URL.createObjectURL(pdfBlob);
                 var embed = document.getElementById('pdfViewer');
                 embed.src = blobUrl;
                 embed.style.display = '';
-                document.getElementById('viewerPlaceholder').style.display = 'none';
-                document.getElementById('status').textContent = '✅ 就绪';
-            })
-            .catch(function(err) {
-                document.getElementById('viewerPlaceholder').innerHTML =
-                    '❌ 加载失败：' + err.message +
-                    '，<a href="' + fileUrl + '" target="_blank" style="color:#facc15;margin-left:6px;">直接打开文件</a>';
-                document.getElementById('status').textContent = '❌ 失败';
+                document.getElementById('viewerWrap').style.display = 'none';
+                statusEl.textContent = '✅ ' + label;
             });
+        }
+
+        var attempts = [];
+        if (jsdUrl) attempts.push({ url: jsdUrl, label: 'jsDelivr CDN' });
+        attempts.push({ url: ghUrl, label: 'GitHub Pages' });
+
+        function tryNext(idx) {
+            if (idx >= attempts.length) {
+                document.getElementById('viewerWrap').innerHTML =
+                    '❌ 所有源都加载失败。' +
+                    '尝试 <a href="' + ghUrl + '" target="_blank" style="color:#facc15;">直接打开文件</a>' +
+                    ' 或 <a href="' + ghUrl + '" download style="color:#facc15;margin-left:8px;">下载</a>';
+                statusEl.textContent = '❌ 失败';
+                return;
+            }
+            var attempt = attempts[idx];
+            loadFrom(attempt.url, attempt.label)
+                .catch(function(err) {
+                    console.warn(attempt.label + ' 失败:', err.message);
+                    tryNext(idx + 1);
+                });
+        }
+
+        tryNext(0);
     })();
     </script>
 </body>
