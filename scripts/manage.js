@@ -17,7 +17,7 @@ const https = require('https');
 const readline = require('readline');
 
 // GitHub 配置（从 .env 文件读取）
-const GITHUB_OWNER = 'tjiux';
+const GITHUB_OWNER = 'HaximTus';
 const GITHUB_REPO = 'tus';
 let GITHUB_TOKEN = '';
 
@@ -256,7 +256,7 @@ async function deployViaGit() {
         execSync('git push', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
 
         console.log('\n  ✅ 部署成功！');
-        console.log('  🔗 https://tjiux.github.io/tus/');
+        console.log('  🔗 https://HaximTus.github.io/tus/');
     } catch (e) {
         console.log(`\n  ❌ 部署失败: ${e.message}`);
         console.log('  建议改用 API 上传方式部署');
@@ -274,16 +274,11 @@ async function deployViaAPI() {
         return;
     }
 
+    const { execSync } = require('child_process');
     try {
-        require(path.join(__dirname, 'deploy-via-api.js'));
+        execSync('node scripts/deploy-via-api.js', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
     } catch (e) {
-        // 直接运行部署脚本
-        const { execSync } = require('child_process');
-        try {
-            execSync('node scripts/deploy-via-api.js', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
-        } catch (e2) {
-            console.log(`\n  ❌ 部署失败: ${e2.message}`);
-        }
+        console.log(`\n  ❌ 部署失败: ${e.message}`);
     }
 }
 
