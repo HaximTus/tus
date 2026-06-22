@@ -507,7 +507,19 @@ async function loadReviewList() {
                 + '<a href="' + issue.html_url + '" target="_blank" class="text-xs text-amber-600 hover:text-amber-700">查看 Issue →</a></div>'
                 + '<div class="text-xs text-stone-400 mb-2">提交者: ' + escapeHtml(issue.user.login) + ' · ' + new Date(issue.created_at).toLocaleString('zh-CN') + '</div>'
                 + '<div class="text-xs text-stone-500 mb-2">科目: ' + escapeHtml(fields['科目'] || '?') + ' · 标题: ' + escapeHtml(fields['标题'] || issue.title.replace('[新试卷] ', '')) + ' · 年份: ' + escapeHtml(fields['年份'] || '?') + ' · 学期: ' + escapeHtml(fields['学期'] || '?') + ' · 上传者: ' + escapeHtml(fields['提交者'] || '?') + '</div>'
-                + (repoPath ? '<div class="text-xs text-stone-400 mb-3">📁 ' + escapeHtml(repoPath) + '</div>' : '')
+                + (repoPath
+                    ? '<div class="text-xs text-stone-400 mb-2">📁 ' + escapeHtml(repoPath) + '</div>'
+                        + (function(){
+                            var ext = repoPath.split('.').pop().toLowerCase();
+                            var isPdf = ext === 'pdf';
+                            var fileUrl = '/' + repoPath;
+                            var previewUrl = isPdf
+                                ? 'preview.html?url=' + encodeURIComponent(window.location.origin + '/' + repoPath)
+                                : 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(window.location.origin + '/' + repoPath);
+                            return '<div class="flex gap-2 mb-3"><a href="' + previewUrl + '" target="_blank" class="text-xs text-amber-600 hover:text-amber-700 underline">🔗 预览文件</a>'
+                                + '<a href="' + fileUrl + '" download class="text-xs text-amber-600 hover:text-amber-700 underline">📥 下载</a></div>';
+                        })()
+                    : '')
                 + '<div class="flex gap-2"><button onclick="acceptIssue(' + issue.number + ')" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 transition-colors">✅ 接受</button>'
                 + '<button onclick="rejectIssue(' + issue.number + ')" class="px-3 py-1.5 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition-colors">❌ 拒绝</button>'
                 + '<button onclick="skipIssue(' + issue.number + ')" class="px-3 py-1.5 bg-stone-200 dark:bg-stone-600 text-stone-600 dark:text-stone-300 text-xs rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500 transition-colors">⏭ 跳过</button></div>'
