@@ -29,7 +29,7 @@
         <form id="submitForm" class="bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 p-8 space-y-5">
             <!-- 科目（搜索选择 + 输入新科目） -->
             <div>
-                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">所属科目 *</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">所属科目 <span class="text-red-500">*</span></label>
                 <div class="relative">
                     <input type="text" id="subjectSearch" autocomplete="off" placeholder="搜索已有科目，或直接输入新科目名称..."
                         class="w-full px-4 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 dark:text-stone-200 placeholder:text-stone-400 dark:placeholder:text-stone-500">
@@ -43,7 +43,7 @@
 
             <!-- 年级 -->
             <div>
-                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">适用年级 *</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">适用年级 <span class="text-red-500">*</span></label>
                 <select id="paperGrade" required class="w-full px-4 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 dark:text-stone-200">
                     <option value="">请选择年级...</option>
                     <option value="大一">大一</option>
@@ -55,7 +55,7 @@
 
             <!-- 试卷标题 -->
             <div>
-                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">试卷标题 *</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">试卷标题 <span class="text-red-500">*</span></label>
                 <input type="text" id="paperTitle" required placeholder="例如：2024秋高等数学期末考试"
                     class="w-full px-4 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 dark:text-stone-200 placeholder:text-stone-400 dark:placeholder:text-stone-500">
             </div>
@@ -63,11 +63,11 @@
             <!-- 年份 + 学期 -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">年份 *</label>
+                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">年份 <span class="text-red-500">*</span></label>
                     <select id="paperYear" required class="w-full px-4 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 dark:text-stone-200"></select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">学期 *</label>
+                    <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">学期 <span class="text-red-500">*</span></label>
                     <select id="paperSemester" required class="w-full px-4 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-300 shadow-sm text-stone-700 dark:text-stone-200">
                         <option value="上学期期末">上学期期末</option>
                         <option value="上学期期中">上学期期中</option>
@@ -93,7 +93,7 @@
 
             <!-- 试卷文件 -->
             <div>
-                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">试卷文件 *</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">试卷文件 <span class="text-red-500">*</span></label>
                 <div id="dropZone" class="border-2 border-dashed border-stone-200 dark:border-stone-600 rounded-xl p-8 text-center cursor-pointer hover:border-amber-300 hover:bg-amber-50/30 dark:hover:bg-stone-700/30 transition-colors">
                     <p class="text-stone-500 dark:text-stone-400">点击选择或拖拽文件</p>
                     <p class="text-stone-400 dark:text-stone-500 text-sm mt-1">支持 PDF / Word（.doc .docx），最大 10MB</p>
@@ -109,7 +109,7 @@
             </div>
 
             <!-- 提交按钮 -->
-            <button type="submit" id="submitBtn" class="w-full bg-yellow-600 dark:bg-yellow-500 text-stone-900 py-3.5 rounded-xl hover:bg-yellow-700 dark:hover:bg-yellow-400 font-medium disabled:opacity-40 transition-colors" disabled>
+            <button type="submit" id="submitBtn" class="w-full bg-yellow-600 dark:bg-yellow-500 text-stone-900 py-3.5 rounded-xl hover:bg-yellow-700 dark:hover:bg-yellow-400 font-medium transition-colors">
                 提交试卷
             </button>
         </form>
