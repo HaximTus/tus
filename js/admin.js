@@ -67,11 +67,16 @@ async function getFileSha(filePath) {
 }
 
 async function uploadFile(filePath, content, msg) {
-    var sha = await getFileSha(filePath);
-    var body = { message: msg || 'Update ' + filePath, content: btoa(unescape(encodeURIComponent(content))), branch: BRANCH };
-    if (sha) body.sha = sha;
-    var r = await ghPut('/contents/' + filePath, body);
-    return r.ok;
+    // 失败自动重试一次（应对 GitHub API 限流抖动）
+    for (var attempt = 0; attempt < 2; attempt++) {
+        var sha = await getFileSha(filePath);
+        var body = { message: msg || 'Update ' + filePath, content: btoa(unescape(encodeURIComponent(content))), branch: BRANCH };
+        if (sha) body.sha = sha;
+        var r = await ghPut('/contents/' + filePath, body);
+        if (r.ok) return true;
+        if (attempt === 0) await new Promise(function(r) { setTimeout(r, 1000); });
+    }
+    return false;
 }
 
 async function deleteRepoFile(filePath) {
