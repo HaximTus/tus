@@ -204,7 +204,36 @@ document.addEventListener('DOMContentLoaded', async function() {
     searchPaper.addEventListener('input', filterPapers);
 
     await loadData();
+    // 数据加载完成后，后台预取 PDF 文件
+    preloadPdfs(allPapers);
 });
+
+// ========== PDF 预加载缓存 ==========
+var _pdfCache = {};
+
+function getAbsoluteUrl(url) {
+    return url.indexOf('://') === -1 ? window.location.origin + url : url;
+}
+
+function preloadPdfs(papers) {
+    for (var i = 0; i < papers.length; i++) {
+        var p = papers[i];
+        // 只预加载 PDF，不预加载 Word
+        var ext = (p.file_name || p.file_path || '').split('.').pop().toLowerCase();
+        if (ext !== 'pdf') continue;
+        var rawPath = p.file_path || '';
+        var encodedPath = encodeURI(rawPath);
+        var fileUrl = p.file_url || getBaseUrl() + '/assets/papers/' + encodedPath;
+        var absUrl = getAbsoluteUrl(fileUrl);
+        // 低优先级后台 fetch，结果缓存到 _pdfCache
+        fetch(absUrl).then(function(resp) {
+            if (!resp.ok) return null;
+            return resp.arrayBuffer();
+        }).then(function(buf) {
+            if (buf) _pdfCache[absUrl] = buf;
+        }).catch(function() { /* 静默失败，不影响用户体验 */ });
+    }
+}
 
 // ========== 试卷详情弹窗（内嵌预览） ==========
 function showPaperDetail(paper) {
@@ -330,9 +359,15 @@ function enterPreviewMode(overlay) {
             previewLoading.querySelector('p').textContent = '正在渲染 PDF...';
             var base = (window.location.pathname.indexOf('/tus/') >= 0 ? '/tus' : '');
 
+            // 优先使用预加载缓存
+            var pdfData = _pdfCache[getAbsoluteUrl(previewUrl)];
+            var fetchPromise = pdfData
+                ? Promise.resolve(pdfData)
+                : fetch(previewUrl).then(function(r) { return r.arrayBuffer(); });
+
             import(base + '/js/pdf.min.mjs').then(function(pdfjs) {
                 pdfjs.GlobalWorkerOptions.workerSrc = base + '/js/pdf.worker.min.mjs';
-                return fetch(previewUrl).then(function(r) { return r.arrayBuffer(); })
+                return fetchPromise
                 .then(function(buffer) {
                     return pdfjs.getDocument({ data: buffer }).promise;
                 })
