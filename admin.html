@@ -103,7 +103,10 @@
             <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
                 <a href="." class="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-tight">Tus</a>
                 <span class="text-sm text-stone-400 dark:text-stone-500">管理后台</span>
-                <button onclick="adminLogout()" class="text-sm text-stone-500 dark:text-stone-400 hover:text-red-500 transition-colors">退出</button>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleAdminDark()" id="adminDarkToggle" class="dark-toggle" aria-label="切换暗色模式" style="width:28px;height:28px;font-size:12px;">暗</button>
+                    <button onclick="adminLogout()" class="text-sm text-stone-500 dark:text-stone-400 hover:text-red-500 transition-colors">退出</button>
+                </div>
             </div>
         </nav>
 
