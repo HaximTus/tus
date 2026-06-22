@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 subjectHidden.value = btn.dataset.name;
                 subjectInput.value = btn.dataset.name;
                 subjectDropdown.classList.add('hidden');
-                checkForm();
+                /* form validated on submit */
             });
         });
     }
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         subjectHidden.value = val;
         subjectDropdown.classList.remove('hidden');
         renderDropdown(val);
-        checkForm();
+        /* form validated on submit */
     });
 
     subjectInput.addEventListener('blur', () => {
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         fileSize.textContent = formatSize(file.size);
         fileInfo.classList.remove('hidden');
         dropZone.classList.add('hidden');
-        checkForm();
+        /* form validated on submit */
     }
 
     removeFile.addEventListener('click', () => {
@@ -140,23 +140,91 @@ document.addEventListener('DOMContentLoaded', async function() {
         fileInfo.classList.add('hidden');
         dropZone.classList.remove('hidden');
         fileInput.value = '';
-        checkForm();
+        /* form validated on submit */
     });
 
-    // ========== 表单验证 ==========
+    // ========== 表单验证 + 自动定位 ==========
     const form = document.getElementById('submitForm');
     const submitBtn = document.getElementById('submitBtn');
 
-    function checkForm() {
-        const subject = subjectHidden.value.trim();
-        const title = document.getElementById('paperTitle').value.trim();
-        const grade = document.getElementById('paperGrade').value;
-        submitBtn.disabled = !(subject && title && grade && selectedFile);
+    // 必填字段列表（按页面顺序）
+    var requiredFields = [
+        { el: subjectHidden,         input: subjectInput,  label: '所属科目' },
+        { el: document.getElementById('paperGrade'),   input: null,          label: '适用年级' },
+        { el: document.getElementById('paperTitle'),   input: null,          label: '试卷标题' },
+        { el: document.getElementById('paperYear'),    input: null,          label: '年份' },
+        { el: document.getElementById('paperSemester'),input: null,          label: '学期' },
+    ];
+
+    // 清除红色高亮
+    function clearErrors() {
+        document.querySelectorAll('.submit-error').forEach(function(el) {
+            el.classList.remove('submit-error');
+        });
+        document.querySelectorAll('.submit-error-msg').forEach(function(el) {
+            el.remove();
+        });
     }
 
-    document.querySelectorAll('#submitForm input, #submitForm select').forEach(el => {
-        el.addEventListener('change', checkForm);
-        el.addEventListener('input', checkForm);
+    // 验证并定位到第一个空字段
+    function validateAndFocus() {
+        clearErrors();
+        // 1. 科目
+        if (!subjectHidden.value.trim()) {
+            return focusError(subjectInput, '请选择或输入科目');
+        }
+        // 2. 年级
+        var g = document.getElementById('paperGrade');
+        if (!g.value) {
+            return focusError(g, '请选择年级');
+        }
+        // 3. 标题
+        var t = document.getElementById('paperTitle');
+        if (!t.value.trim()) {
+            return focusError(t, '请输入试卷标题');
+        }
+        // 4. 年份
+        var y = document.getElementById('paperYear');
+        if (!y.value) {
+            return focusError(y, '请选择年份');
+        }
+        // 5. 学期
+        var s = document.getElementById('paperSemester');
+        if (!s.value) {
+            return focusError(s, '请选择学期');
+        }
+        // 6. 文件
+        if (!selectedFile) {
+            return focusError(document.getElementById('dropZone'), '请选择试卷文件');
+        }
+        return true;
+    }
+
+    function focusError(el, msg) {
+        el.classList.add('submit-error');
+        // 添加错误提示
+        var err = document.createElement('p');
+        err.className = 'submit-error-msg text-red-500 text-xs mt-1';
+        err.textContent = msg;
+        el.parentNode.appendChild(err);
+        // 滚动到元素
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+        return false;
+    }
+
+    // 输入时清除错误状态
+    document.querySelectorAll('#submitForm input, #submitForm select').forEach(function(el) {
+        el.addEventListener('input', function() {
+            this.classList.remove('submit-error');
+            var next = this.parentNode.querySelector('.submit-error-msg');
+            if (next) next.remove();
+        });
+        el.addEventListener('change', function() {
+            this.classList.remove('submit-error');
+            var next = this.parentNode.querySelector('.submit-error-msg');
+            if (next) next.remove();
+        });
     });
 
     // ========== 提交处理 ==========
@@ -168,6 +236,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // 先验证必填字段，未填则定位到第一个
+        if (!validateAndFocus()) return;
 
         const subject = subjectHidden.value.trim();
         const title = document.getElementById('paperTitle').value.trim();
