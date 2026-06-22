@@ -169,8 +169,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 验证并定位到第一个空字段
     function validateAndFocus() {
         clearErrors();
-        // 1. 科目
-        if (!subjectHidden.value.trim()) {
+        // 1. 科目（hidden 在用户打字时就会被赋值，需同时检查 visible input）
+        if (!subjectHidden.value.trim() || !subjectInput.value.trim()) {
             return focusError(subjectInput, '请选择或输入科目');
         }
         // 2. 年级
@@ -202,14 +202,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function focusError(el, msg) {
         el.classList.add('submit-error');
-        // 添加错误提示
+        // 添加错误提示（追加到父级底部，或与 label 同层）
         var err = document.createElement('p');
         err.className = 'submit-error-msg text-red-500 text-xs mt-1';
         err.textContent = msg;
-        el.parentNode.appendChild(err);
-        // 滚动到元素
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.focus({ preventScroll: true });
+        var parent = el.parentNode;
+        // 如果父级是 grid 列（年份/学期），往上找一层到 form-group
+        if (parent.parentNode && (parent.parentNode.classList.contains('grid') || parent.parentNode.id === 'submitForm')) {
+            parent = parent.parentNode;
+        }
+        parent.appendChild(err);
+        // 文件上传区不可聚焦，改为聚焦隐藏的 file input
+        if (el.id === 'dropZone') {
+            el.setAttribute('tabindex', '-1');
+            el = document.getElementById('fileInput');
+        }
+        // 移动端兼容：延迟执行 scroll + focus，避开 iOS 限制
+        setTimeout(function() {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { el.focus({ preventScroll: true }); } catch(e) { el.focus(); }
+        }, 300);
         return false;
     }
 
