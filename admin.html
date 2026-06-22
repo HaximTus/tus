@@ -9,12 +9,28 @@
     <link rel="stylesheet" href="css/tailwind.css?v=4">
     <link rel="stylesheet" href="css/style.css?v=4">
     <style>
-        body::after { display: none !important; } /* 去除主站纸张纹理 */
+        body::after { display: none !important; }
+        /* 管理后台统一文字配色 */
+        .admin-sidebar a { color: #44403c; font-size: 14px; }
+        html.dark .admin-sidebar a { color: #d6cec4; }
+        .admin-table th { color: #57534e !important; font-weight: 600; }
+        html.dark .admin-table th { color: #a8a29e !important; }
+        .admin-table td,
+        .admin-content .text-sm,
+        .admin-content p,
+        .admin-content .stat-card div:last-child { color: #44403c; }
+        html.dark .admin-table td,
+        html.dark .admin-content .text-sm,
+        html.dark .admin-content p,
+        html.dark .admin-content .stat-card div:last-child { color: #d6cec4; }
+        /* 输入框文字颜色（Tailwind 将 placeholder 设为 currentColor，保证文字本身可读即可） */
+        .admin-modal-card input { color: #292524; }
+        html.dark .admin-modal-card input { color: #e4dcd2; }
         /* Admin layout */
         .admin-sidebar { width: 220px; flex-shrink: 0; }
         .admin-content { flex: 1; min-width: 0; }
-        .admin-sidebar a.active { background: #ca8a04; color: #292524; }
-        html.dark .admin-sidebar a.active { background: #eab308; color: #1c1917; }
+        .admin-sidebar a.active { background: #ca8a04; color: #1c1917; font-weight: 600; }
+        html.dark .admin-sidebar a.active { background: #eab308; color: #1c1917; font-weight: 600; }
         .admin-sidebar a { transition: all 0.15s ease; }
         @media (max-width: 640px) {
             .admin-sidebar { width: 100%; position: static; }
