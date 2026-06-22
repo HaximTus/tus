@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const dropdownItems = document.getElementById('dropdownItems');
 
     let allSubjects = [];
+    var subjectSelected = false;  // 标记是否从下拉框确认选择
 
     try {
         allSubjects = await getSubjects();
@@ -60,9 +61,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (filtered.length === 0) {
             dropdownItems.innerHTML = `
-                <div class="px-4 py-3 text-sm text-stone-400 dark:text-stone-500 italic">
-                    将使用新科目: "${filter}"
-                </div>`;
+                <button type="button" class="w-full text-left px-4 py-3 text-sm text-stone-500 dark:text-stone-400 italic hover:bg-amber-50 dark:hover:bg-stone-700 transition-colors subject-new" data-name="${filter}">
+                    创建新科目: "${filter}"
+                </button>`;
+            var newBtn = dropdownItems.querySelector('.subject-new');
+            if (newBtn) {
+                newBtn.addEventListener('click', function() {
+                    subjectHidden.value = this.dataset.name;
+                    subjectInput.value = this.dataset.name;
+                    subjectDropdown.classList.add('hidden');
+                    subjectSelected = true;
+                });
+            }
             return;
         }
 
@@ -78,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 subjectHidden.value = btn.dataset.name;
                 subjectInput.value = btn.dataset.name;
                 subjectDropdown.classList.add('hidden');
-                /* form validated on submit */
+                subjectSelected = true;
             });
         });
     }
@@ -86,9 +96,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     subjectInput.addEventListener('input', function() {
         const val = this.value.trim();
         subjectHidden.value = val;
+        subjectSelected = false;  // 重新输入取消选中状态
         subjectDropdown.classList.remove('hidden');
         renderDropdown(val);
-        /* form validated on submit */
     });
 
     subjectInput.addEventListener('blur', () => {
@@ -169,8 +179,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 验证并定位到第一个空字段
     function validateAndFocus() {
         clearErrors();
-        // 1. 科目（hidden 在用户打字时就会被赋值，需同时检查 visible input）
-        if (!subjectHidden.value.trim() || !subjectInput.value.trim()) {
+        // 1. 科目（使用选中标记，输入文本不算确认）
+        if (!subjectSelected || !subjectInput.value.trim()) {
             return focusError(subjectInput, '请选择或输入科目');
         }
         // 2. 年级
