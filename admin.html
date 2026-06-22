@@ -15,18 +15,14 @@
         html.dark .admin-sidebar a { color: #d6cec4; }
         .admin-table th { color: #57534e; font-weight: 600; }
         html.dark .admin-table th { color: #a8a29e; }
-        .admin-table td { color: #44403c; }
-        html.dark .admin-table td { color: #d6cec4; }
-        .admin-content p,
-        .admin-content .stat-card div:last-child { color: #44403c; }
-        html.dark .admin-content p,
-        html.dark .admin-content .stat-card div:last-child { color: #d6cec4; }
-        /* 弹窗输入框/下拉框文字 */
-        .admin-modal-card input,
-        .admin-modal-card select { color: #292524; }
-        html.dark .admin-modal-card input,
-        html.dark .admin-modal-card select { color: #e4dcd2; }
-        /* 弹窗下拉框选项 - 深色背景确保可读 */
+        .admin-content p { color: #44403c; }
+        html.dark .admin-content p { color: #d6cec4; }
+        /* 弹窗 + 登录页输入框/下拉框文字 */
+        .admin-modal-card input, .admin-modal-card select,
+        #loginPage input { color: #292524; }
+        html.dark .admin-modal-card input, html.dark .admin-modal-card select,
+        html.dark #loginPage input { color: #e4dcd2; }
+        /* 弹窗下拉框选项 */
         html.dark .admin-modal-card select option { background: #2d2824; color: #e4dcd2; }
         /* Admin layout */
         .admin-sidebar { width: 220px; flex-shrink: 0; }
