@@ -56,7 +56,11 @@ async function gh(method, path, body) {
     return { status: resp.status, data: data, ok: resp.ok };
 }
 
-async function ghGet(path) { return gh('GET', path); }
+async function ghGet(path) {
+    // 加时间戳避免 GitHub API 缓存
+    var sep = path.indexOf('?') >= 0 ? '&' : '?';
+    return gh('GET', path + sep + '_t=' + Date.now());
+}
 async function ghPut(path, body) { return gh('PUT', path, body); }
 async function ghPatch(path, body) { return gh('PATCH', path, body); }
 async function ghDel(path) { return gh('DELETE', path); }
