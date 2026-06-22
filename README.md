@@ -3,7 +3,7 @@
 > 分享历年期中期末试题，帮同学们轻松备考！
 
 ## 访问地址
-**[https://HaximTus.github.io/tus/](https://HaximTus.github.io/tus/)**
+**[https://haximtus.cn/](https://haximtus.cn/)**（原 [https://HaximTus.github.io/tus/](https://HaximTus.github.io/tus/））
 
 ## 功能
 - 📖 按科目浏览试卷，按年级筛选
