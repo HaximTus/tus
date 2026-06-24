@@ -253,7 +253,11 @@ function showPaperDetail(paper) {
     var previewUrl;
     var viewerHtml;
     if (isPdf) {
-        previewUrl = 'preview.html?url=' + encodeURIComponent(absoluteUrl);
+        // 始终用 GitHub Pages 完整 URL，确保 preview.html 能识别并走 jsDelivr CDN
+        var ghPagesUrl = absoluteUrl.indexOf('github.io') >= 0
+            ? absoluteUrl
+            : 'https://HaximTus.github.io/tus' + originalUrl;
+        previewUrl = 'preview.html?url=' + encodeURIComponent(ghPagesUrl);
         viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank"></iframe>';
     } else {
         previewUrl = absoluteUrl;
@@ -473,7 +477,11 @@ function exitPreviewMode(overlay) {
             ? window.location.origin + downloadHref
             : downloadHref;
         var newPreviewUrl = isPdf
-            ? 'preview.html?url=' + encodeURIComponent(absoluteUrl)
+            ? 'preview.html?url=' + encodeURIComponent(
+                absoluteUrl.indexOf('github.io') >= 0
+                    ? absoluteUrl
+                    : 'https://HaximTus.github.io/tus' + downloadHref
+              )
             : absoluteUrl;
 
         var previewBtn = document.createElement('button');
