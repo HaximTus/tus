@@ -306,6 +306,15 @@ function showPaperDetail(paper) {
         closePaperDetail(overlay);
     });
 
+    // 预加载 PDF.js 模块（弹窗打开时提前下载，点击预览时省去等待）
+    if (isPdf && !window._pdfjsPromise) {
+        var base = (window.location.pathname.indexOf('/tus/') >= 0 ? '/tus' : '');
+        window._pdfjsPromise = import(base + '/js/pdf.min.mjs').then(function(pdfjs) {
+            pdfjs.GlobalWorkerOptions.workerSrc = base + '/js/pdf.worker.min.mjs';
+            return pdfjs;
+        });
+    }
+
     document.body.appendChild(overlay);
     void overlay.offsetWidth;
 }
@@ -352,10 +361,14 @@ function enterPreviewMode(overlay) {
 
         function renderPdf() {
             previewLoading.querySelector('p').textContent = '正在加载 PDF...';
-            var base = (window.location.pathname.indexOf('/tus/') >= 0 ? '/tus' : '');
 
-            import(base + '/js/pdf.min.mjs').then(function(pdfjs) {
-                pdfjs.GlobalWorkerOptions.workerSrc = base + '/js/pdf.worker.min.mjs';
+            (window._pdfjsPromise || (function() {
+                var base = (window.location.pathname.indexOf('/tus/') >= 0 ? '/tus' : '');
+                return import(base + '/js/pdf.min.mjs').then(function(pdfjs) {
+                    pdfjs.GlobalWorkerOptions.workerSrc = base + '/js/pdf.worker.min.mjs';
+                    return pdfjs;
+                });
+            })()).then(function(pdfjs) {
                 return fetch(previewUrl).then(function(r) { return r.arrayBuffer(); })
                 .then(function(buffer) {
                     // 流式加载 + iOS 兼容
