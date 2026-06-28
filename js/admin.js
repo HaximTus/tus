@@ -677,7 +677,6 @@ async function adminDeploy() {
         'js/api-client.js', 'js/index.js', 'js/subject-detail.js', 'js/submit.js', 'js/ui.js', 'js/announcement.js', 'js/admin.js',
         'js/docx-preview.min.js', 'js/jszip.min.js',
         'favicon.svg',
-        'data/subjects.json', 'data/papers.json',
         'scripts/manage.js', 'scripts/deploy-via-api.js'
     ];
 
