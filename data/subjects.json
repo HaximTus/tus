@@ -70,5 +70,13 @@
         "teacher": "",
         "description": "",
         "created_at": "2026-06-28"
+    },
+    {
+        "id": 10,
+        "name": "马克思主义原理-都柏林",
+        "grade": "大二",
+        "teacher": "",
+        "description": "",
+        "created_at": "2026-06-28"
     }
 ]
