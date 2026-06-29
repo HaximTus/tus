@@ -268,7 +268,7 @@ async function deployViaGit() {
 // 方式2: API 上传（适合中国内地网络环境）
 async function deployViaAPI() {
     console.log('\n  使用 API 上传文件到 GitHub...');
-    console.log('  此方式会更新所有网页文件和数据文件\n');
+    console.log('  此方式会更新所有网页文件、数据文件和试卷文件\n');
 
     const confirm = await question('  确定要部署吗? (y/N): ');
     if (confirm.toLowerCase() !== 'y') {
@@ -277,10 +277,59 @@ async function deployViaAPI() {
     }
 
     const { execSync } = require('child_process');
+
+    // 1) 上传网页文件和试卷文件（deploy-via-api.js 负责）
+    console.log('\n  ── 步骤 1/2: 上传网页 + 试卷文件 ──');
     try {
         execSync('node scripts/deploy-via-api.js', { cwd: path.join(__dirname, '..'), stdio: 'inherit' });
     } catch (e) {
-        console.log(`\n  ❌ 部署失败: ${e.message}`);
+        console.log(`\n  ⚠️ 网页文件上传异常: ${e.message}`);
+    }
+
+    // 2) 上传数据文件（subjects.json + papers.json）
+    console.log('\n  ── 步骤 2/2: 上传数据文件 ──');
+    const dataFiles = ['data/subjects.json', 'data/papers.json'];
+    let dataOk = 0, dataFail = 0;
+    for (const fp of dataFiles) {
+        console.log(`  📤 ${fp}...`);
+        try {
+            const fullPath = path.join(__dirname, '..', fp);
+            const content = fs.readFileSync(fullPath, 'utf-8');
+            const base64 = Buffer.from(content, 'utf-8').toString('base64');
+
+            // 获取当前文件 SHA（如果存在）
+            const shaRes = await githubAPI('GET', `/contents/${encodeURI(fp)}?ref=main`);
+            const sha = (shaRes.status === 200 && shaRes.data.sha) ? shaRes.data.sha : null;
+            const msg = sha ? `Update ${fp}` : `Create ${fp}`;
+
+            const putBody = {
+                message: msg,
+                content: base64,
+                branch: 'main'
+            };
+            if (sha) putBody.sha = sha;
+
+            const result = await githubAPI('PUT', `/contents/${encodeURI(fp)}`, putBody);
+            if (result.status === 201 || result.status === 200) {
+                console.log(`  ✅ ${fp}`);
+                dataOk++;
+            } else {
+                console.error(`  ❌ ${fp} (${result.status})`);
+                if (result.data && result.data.message) console.error(`     ${result.data.message}`);
+                dataFail++;
+            }
+        } catch (e) {
+            console.error(`  ❌ ${fp}: ${e.message}`);
+            dataFail++;
+        }
+    }
+
+    console.log(`\n  📊 数据文件: ${dataOk} 成功, ${dataFail} 失败`);
+    if (dataOk === dataFiles.length && dataFail === 0) {
+        console.log('\n  ✅ 部署完成！');
+        console.log('  🔗 https://haximtus.cn/');
+    } else {
+        console.log('\n  ⚠️ 部署部分完成，请检查以上错误信息');
     }
 }
 
