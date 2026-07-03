@@ -78,5 +78,13 @@
         "teacher": "",
         "description": "",
         "created_at": "2026-06-28"
+    },
+    {
+        "id": 11,
+        "name": "计算机架构导论-都柏林",
+        "grade": "大一",
+        "teacher": "",
+        "description": "",
+        "created_at": "2026-07-03"
     }
 ]
