@@ -8,7 +8,7 @@
   var HEADER_HTML =
     '<div class="announcement-date">二〇二六年六月十九日</div>' +
     '<div class="announcement-header-row">' +
-      '<div class="announcement-title">公告</div>' +
+      '<div class="announcement-title" id="announcementTitle">公告</div>' +
       '<div class="announcement-seal">A</div>' +
     '</div>';
 
@@ -34,15 +34,21 @@
     overlay.id = 'announcementOverlay';
 
     overlay.innerHTML =
-      '<div class="announcement-card">' +
-        '<div class="announcement-header">' + HEADER_HTML + '</div>' +
-        '<div class="announcement-body">' + BODY_HTML + '</div>' +
-        '<div class="announcement-footer">' +
-          '<button class="announcement-btn" id="announcementConfirm">确 定</button>' +
+      '<div class="announcement-scroll" role="dialog" aria-modal="true" aria-labelledby="announcementTitle" tabindex="-1">' +
+        '<div class="announcement-rod announcement-rod-top" aria-hidden="true"></div>' +
+        '<button class="announcement-close" id="announcementClose" type="button" aria-label="关闭公告" title="关闭公告">&times;</button>' +
+        '<div class="announcement-card">' +
+          '<div class="announcement-header">' + HEADER_HTML + '</div>' +
+          '<div class="announcement-body">' + BODY_HTML + '</div>' +
         '</div>' +
+        '<div class="announcement-rod announcement-rod-bottom" aria-hidden="true"></div>' +
       '</div>';
 
-    var btn = overlay.querySelector('#announcementConfirm');
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) closeOverlay(overlay);
+    });
+
+    var btn = overlay.querySelector('#announcementClose');
     btn.addEventListener('click', function () {
       closeOverlay(overlay);
     });
@@ -51,11 +57,14 @@
   }
 
   function closeOverlay(overlay) {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.3s ease';
+    if (overlay.classList.contains('is-closing')) return;
+    overlay.classList.add('is-closing');
+    if (overlay._onAnnouncementKeydown) {
+      document.removeEventListener('keydown', overlay._onAnnouncementKeydown);
+    }
     setTimeout(function () {
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    }, 300);
+    }, 640);
   }
 
   /* ========== 显示公告 ========== */
@@ -63,6 +72,11 @@
     if (document.getElementById('announcementOverlay')) return;
     var overlay = buildOverlay();
     document.body.appendChild(overlay);
+    overlay._onAnnouncementKeydown = function (event) {
+      if (event.key === 'Escape') closeOverlay(overlay);
+    };
+    document.addEventListener('keydown', overlay._onAnnouncementKeydown);
+    overlay.querySelector('.announcement-scroll').focus({ preventScroll: true });
   };
 
   /* ========== 初始化 ========== */
