@@ -47,7 +47,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             subjectTeacher.textContent = subject.teacher || '';
             subjectDescription.textContent = subject.description || '';
 
-            allPapers = papers;
+            // 始终按年份由近到远展示；slice 保留 API 缓存中的原始数组不被修改。
+            allPapers = papers.slice().sort(function(a, b) {
+                return b.year - a.year;
+            });
             loadingState.classList.add('hidden');
 
             if (papers.length === 0) {
@@ -59,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             yearFilter.innerHTML = '<option value="">全部年份</option>' +
                 years.map(function(y) { return '<option value="' + y + '">' + y + '年</option>'; }).join('');
 
-            renderPapers(papers);
+            renderPapers(allPapers);
         } catch (e) {
             showError(e.message || '加载失败');
         }
