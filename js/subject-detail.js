@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     const subjectTitle = document.getElementById('subjectTitle');
+    // 与首页同名元素配对，启用支持浏览器中的跨页面标题过渡。
+    subjectTitle.style.viewTransitionName = 'subject-title-' + subjectId;
     const subjectTeacher = document.getElementById('subjectTeacher');
     const subjectDescription = document.getElementById('subjectDescription');
     const papersContainer = document.getElementById('papersContainer');
@@ -316,6 +318,25 @@ function showPaperDetail(paper) {
 
     document.body.appendChild(overlay);
     void overlay.offsetWidth;
+
+    var downloadBtn = overlay.querySelector('.detail-download-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            showDownloadStamp(downloadBtn);
+        });
+    }
+}
+
+function showDownloadStamp(button) {
+    var oldStamp = button.querySelector('.download-stamp');
+    if (oldStamp) oldStamp.remove();
+    var stamp = document.createElement('span');
+    stamp.className = 'download-stamp';
+    stamp.textContent = '已开始下载';
+    button.appendChild(stamp);
+    setTimeout(function() {
+        if (stamp.parentNode) stamp.parentNode.removeChild(stamp);
+    }, 700);
 }
 
 function enterPreviewMode(overlay) {
