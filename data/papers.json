@@ -45,36 +45,6 @@
         "setter": ""
     },
     {
-        "id": 4,
-        "subject_id": 8,
-        "title": "三年内",
-        "year": 2026,
-        "semester": "上学期期末",
-        "file_url": "",
-        "file_path": "三年内.docx",
-        "file_name": "三年内.docx",
-        "file_size": 17230,
-        "uploaded_by": "热心同学",
-        "download_count": 0,
-        "created_at": "2026-06-21",
-        "setter": "Haxim1"
-    },
-    {
-        "id": 5,
-        "subject_id": 8,
-        "title": "Mxm",
-        "year": 2026,
-        "semester": "上学期期末",
-        "file_url": "",
-        "file_path": "Mxm.pdf",
-        "file_name": "Mxm.pdf",
-        "file_size": 760612,
-        "uploaded_by": "热心同学",
-        "download_count": 0,
-        "created_at": "2026-06-21",
-        "setter": "Haxim"
-    },
-    {
         "id": 6,
         "subject_id": 6,
         "title": "2014-2015都柏林程序设计概论大一上学期期末（Programming 1）",
