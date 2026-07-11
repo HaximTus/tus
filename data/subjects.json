@@ -48,22 +48,6 @@
         "created_at": "2026-06-21"
     },
     {
-        "id": 7,
-        "name": "测试",
-        "grade": "大一",
-        "teacher": "",
-        "description": "",
-        "created_at": "2026-06-21"
-    },
-    {
-        "id": 8,
-        "name": "testuser",
-        "grade": "大一",
-        "teacher": "",
-        "description": "",
-        "created_at": "2026-06-21"
-    },
-    {
         "id": 9,
         "name": "大学物理（工）-都柏林",
         "grade": "大一",
