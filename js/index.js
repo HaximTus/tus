@@ -61,7 +61,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         try {
             const subjects = await getSubjectsWithCount();
-            allSubjects = subjects;
+            // 默认优先展示资料更丰富的科目；试卷数相同时按名称稳定排序。
+            allSubjects = subjects.sort((a, b) => {
+                const countA = a.papers?.[0]?.count || 0;
+                const countB = b.papers?.[0]?.count || 0;
+                return countB - countA || a.name.localeCompare(b.name, 'zh-CN');
+            });
 
             loadingState.classList.add('hidden');
 
