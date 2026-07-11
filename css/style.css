@@ -176,37 +176,27 @@ html.dark select {
     padding-right: 36px;
 }
 
-/* 暗色 Hero 标签 */
+/* 暗色 Hero 书法题签 */
 html.dark .hero-label {
-    background: rgba(255, 255, 255, 0.06);
-    color: #a69a8e;
-}
-html.dark .hero-label::before,
-html.dark .hero-label::after {
-    background: #eab308;
+    color: #d85a50;
 }
 
-/* Hero 标签 */
+/* Hero 书法题签 */
 .hero-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 3px 14px;
-    background: rgba(68, 64, 60, 0.06);
-    border-radius: 999px;
+    display: inline-block;
+    padding: 0;
+    background: transparent;
     font-size: 12px;
-    color: #78716c;
-    letter-spacing: 1px;
+    line-height: 1.6;
+    color: #b33a32;
+    font-family: 'STXingkai', '华文行楷', 'Xingkai SC', 'STKaiti', 'KaiTi', serif;
+    font-weight: 400;
+    letter-spacing: 2px;
     margin-bottom: 16px;
 }
 .hero-label::before,
 .hero-label::after {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ca8a04;
-    display: inline-block;
+    content: none;
 }
 
 /* 纸张纹理背景 */
