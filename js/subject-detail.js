@@ -593,10 +593,10 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
             viewport: viewport,
             transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0]
         }).promise;
-        if (pageNumber === 1 && generation === card._pdfRenderGeneration) {
-            container.style.display = 'flex';
-            iframe.style.display = 'none';
-        }
+    }
+    if (generation === card._pdfRenderGeneration && overlay.isConnected) {
+        container.style.display = 'flex';
+        iframe.style.display = 'none';
     }
 }
 
