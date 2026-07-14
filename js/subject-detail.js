@@ -276,7 +276,7 @@ function showPaperDetail(paper) {
             : 'https://HaximTus.github.io/tus' + originalUrl;
         var proxyUrl = getPreviewProxyUrl(originalUrl);
         previewUrl = proxyUrl || ('preview.html?url=' + encodeURIComponent(ghPagesUrl));
-        viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank"></iframe>';
+        viewerHtml = '<div class="pdf-container" id="pdfContainer" style="display:none;"></div>';
     } else {
         previewUrl = absoluteUrl;
         viewerHtml = '<div class="word-container" id="wordContainer" style="display:none;"></div>';
@@ -388,15 +388,8 @@ function enterPreviewMode(overlay) {
     card.classList.add('preview-mode');
 
     if (isPdf) {
-        // PDF: iframe → preview.html（CDN 备降）
-        var iframe = overlay.querySelector('#previewIframe');
-        if (iframe) {
-            iframe.src = previewUrl;
-            iframe.onload = function() {
-                previewLoading.style.display = 'none';
-                iframe.style.display = '';
-            };
-        }
+        // PDF: 本地 PDF.js 渲染，使用阿里云代理的 Range 请求。
+        renderPdfPreview(overlay, previewUrl, previewLoading);
         // 8 秒超时提示
         var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
         card._previewTimeoutId = setTimeout(function() {
@@ -477,6 +470,49 @@ function enterPreviewMode(overlay) {
                 showWordFallback();
             }
         }, 15000);
+    }
+}
+
+async function renderPdfPreview(overlay, previewUrl, previewLoading) {
+    var container = overlay.querySelector('#pdfContainer');
+    try {
+        var pdfjsLib = await import('./pdf.min.mjs');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.mjs';
+        var pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
+        container.innerHTML = '';
+        container.style.display = 'flex';
+
+        async function renderPage(pageNumber) {
+            var page = await pdf.getPage(pageNumber);
+            var baseViewport = page.getViewport({ scale: 1 });
+            var availableWidth = Math.max(280, container.clientWidth - 4);
+            var outputScale = Math.min(window.devicePixelRatio || 1, 2);
+            var scale = availableWidth / baseViewport.width;
+            var viewport = page.getViewport({ scale: scale });
+            var canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page';
+            canvas.width = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            canvas.style.width = Math.floor(viewport.width) + 'px';
+            canvas.style.height = Math.floor(viewport.height) + 'px';
+            container.appendChild(canvas);
+            await page.render({
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport,
+                transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0]
+            }).promise;
+        }
+
+        await renderPage(1);
+        previewLoading.style.display = 'none';
+        for (var pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
+            await renderPage(pageNumber);
+        }
+    } catch (error) {
+        console.error('PDF preview failed:', error);
+        previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
+            + '预览加载失败，请 <a href="' + escapeAttr(previewUrl) + '" target="_blank" rel="noopener" style="color:#ca8a04;">在新标签页打开</a>'
+            + ' 或直接下载文件。</p>';
     }
 }
 
