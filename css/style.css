@@ -650,6 +650,9 @@ main {
     min-width: 0;
     overflow: hidden;
 }
+.mobile-pdf-container {
+    display: none;
+}
 .word-container {
     background: #525252;
     min-height: 0;
@@ -779,6 +782,24 @@ html.dark .pdf-container {
         width: 100%;
         max-width: 100%;
         min-width: 0;
+    }
+    .paper-detail-card.preview-mode .mobile-pdf-container {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 3px;
+        background: #525252;
+        overflow-x: hidden;
+    }
+    .paper-detail-card.preview-mode .mobile-pdf-page {
+        display: block;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        background: #fff;
     }
     .paper-detail-overlay {
         padding: 0;
