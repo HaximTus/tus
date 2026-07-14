@@ -68,6 +68,50 @@ html.dark body::after {
     justify-content: center;
     line-height: 1;
 }
+
+/* 导航账户入口 */
+.nav-account {
+    max-width: 9rem;
+    overflow: hidden;
+    color: #7a7068;
+    font-size: 12px;
+    line-height: 1.4;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+}
+.nav-account:hover {
+    color: #3d3430;
+}
+
+body.auth-checking .auth-protected-content {
+    visibility: hidden;
+}
+
+body.auth-checking::before {
+    content: '';
+    position: fixed;
+    z-index: 30;
+    top: 50%;
+    left: 50%;
+    width: 26px;
+    height: 26px;
+    border: 2px solid #d6cec4;
+    border-top-color: #b45309;
+    border-radius: 50%;
+    animation: auth-check-spin 700ms linear infinite;
+}
+
+@keyframes auth-check-spin {
+    to { transform: rotate(360deg); }
+}
+html.dark .nav-account {
+    color: #8a7e72;
+}
+html.dark .nav-account:hover {
+    color: #d6cec4;
+}
 @media (hover: hover) {
     .dark-toggle:hover {
         background: rgba(185, 28, 28, 0.06);
