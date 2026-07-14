@@ -672,9 +672,9 @@ async function adminDeploy() {
     function log(msg) { pre.textContent += msg + '\n'; pre.scrollTop = pre.scrollHeight; }
 
     var files = [
-        'index.html', 'subject-detail.html', 'submit.html', 'admin.html',
-        'css/style.css', 'css/tailwind.css', 'css/announcement.css',
-        'js/api-client.js', 'js/index.js', 'js/subject-detail.js', 'js/submit.js', 'js/ui.js', 'js/announcement.js', 'js/admin.js',
+        'index.html', 'account.html', 'subject-detail.html', 'submit.html', 'admin.html',
+        'css/style.css', 'css/tailwind.css', 'css/announcement.css', 'css/auth.css',
+        'js/api-client.js', 'js/auth.js', 'js/index.js', 'js/subject-detail.js', 'js/submit.js', 'js/ui.js', 'js/announcement.js', 'js/admin.js',
         'js/docx-preview.min.js', 'js/jszip.min.js',
         'favicon.svg',
         'scripts/manage.js', 'scripts/deploy-via-api.js'
