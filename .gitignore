@@ -3,5 +3,6 @@ node_modules/
 Thumbs.db
 *.log
 backend/node_modules/
-backend/
+backend/.env
+backend/data/
 .env
