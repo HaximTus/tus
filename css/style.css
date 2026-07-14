@@ -644,6 +644,12 @@ main {
     background: #525252;
     min-height: 0;
 }
+.preview-iframe {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
 .word-container {
     background: #525252;
     min-height: 0;
@@ -768,6 +774,11 @@ html.dark .pdf-container {
     .paper-detail-card.preview-mode .pdf-page {
         width: 100% !important;
         max-width: 100% !important;
+    }
+    .paper-detail-card.preview-mode .preview-iframe {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
     }
     .paper-detail-overlay {
         padding: 0;
