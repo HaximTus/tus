@@ -241,9 +241,14 @@ function preloadPdfs(papers) {
         var encodedPath = encodeURI(p.file_path || '');
         var fileUrl = p.file_url || getBaseUrl() + '/assets/papers/' + encodedPath;
         var absUrl = getAbsoluteUrl(fileUrl);
-        // 只 fetch 不存结果，浏览器 HTTP 缓存会自动保存
-        // 用户点击预览时 fetch 会直接从磁盘读取，几乎无延迟
-        fetch(absUrl, { cache: 'force-cache' }).catch(function() {});
+        var preloadUrl = getPreviewProxyUrl(fileUrl) || absUrl;
+        // 必须消费响应体，才能确保阿里云响应完整写入浏览器 HTTP 缓存。
+        fetch(preloadUrl, { cache: 'force-cache' })
+            .then(function(response) {
+                if (!response.ok) throw new Error('PDF preload failed: ' + response.status);
+                return response.arrayBuffer();
+            })
+            .catch(function() {});
     }
 }
 
@@ -487,25 +492,12 @@ function exitPreviewMode(overlay) {
         card._previewTimeoutId = null;
     }
 
-    // 停止加载
-    var wordContainer = overlay.querySelector('#wordContainer');
-    if (wordContainer) { wordContainer.style.display = 'none'; wordContainer.innerHTML = ''; }
-    var iframe = overlay.querySelector('#previewIframe');
-    if (iframe) {
-        iframe.onload = null;
-        iframe.style.display = 'none';
-        iframe.src = 'about:blank';
-    }
-    card._pdfRenderGeneration = (card._pdfRenderGeneration || 0) + 1;
-    if (card._mobilePdfDocument) {
-        card._mobilePdfDocument.destroy().catch(function() {});
-        card._mobilePdfDocument = null;
-    }
-    var mobilePdfContainer = overlay.querySelector('#mobilePdfContainer');
-    if (mobilePdfContainer) {
-        mobilePdfContainer.style.display = 'none';
-        mobilePdfContainer.innerHTML = '';
-    }
+    // 先取消仍在进行的渲染，并移交文档引用；资源销毁放到界面恢复之后。
+    var exitGeneration = (card._pdfRenderGeneration || 0) + 1;
+    card._pdfRenderGeneration = exitGeneration;
+    var documentToDestroy = card._mobilePdfDocument;
+    card._mobilePdfDocument = null;
+
     var previewLoading = overlay.querySelector('#previewLoading');
     previewLoading.style.display = '';
     previewLoading.innerHTML = '<div class="spinner"></div><p>正在加载预览...</p>';
@@ -527,6 +519,46 @@ function exitPreviewMode(overlay) {
 
     // 移除预览样式
     card.classList.remove('preview-mode');
+
+    // 让浏览器先绘制详情界面，再清理大 Canvas 和 PDF Worker。
+    var cleanupPreview = function() {
+        try {
+            if (documentToDestroy) {
+                var destroyResult = documentToDestroy.destroy();
+                if (destroyResult && typeof destroyResult.catch === 'function') {
+                    destroyResult.catch(function() {});
+                }
+            }
+        } catch (error) {
+            console.warn('PDF cleanup failed:', error);
+        }
+
+        // 用户若已再次进入预览，只销毁旧文档，不触碰新预览的 DOM。
+        if (card._pdfRenderGeneration !== exitGeneration || card.classList.contains('preview-mode')) return;
+        try {
+            var wordContainer = overlay.querySelector('#wordContainer');
+            if (wordContainer) { wordContainer.style.display = 'none'; wordContainer.innerHTML = ''; }
+            var iframe = overlay.querySelector('#previewIframe');
+            if (iframe) {
+                iframe.onload = null;
+                iframe.style.display = 'none';
+                iframe.src = 'about:blank';
+            }
+            var mobilePdfContainer = overlay.querySelector('#mobilePdfContainer');
+            if (mobilePdfContainer) {
+                mobilePdfContainer.style.display = 'none';
+                mobilePdfContainer.innerHTML = '';
+            }
+        } catch (error) {
+            console.warn('Preview DOM cleanup failed:', error);
+        }
+    };
+
+    if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(function() { setTimeout(cleanupPreview, 0); });
+    } else {
+        setTimeout(cleanupPreview, 0);
+    }
 }
 
 function enhanceMobilePdf(overlay, previewUrl) {
@@ -567,7 +599,7 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
         var page = await pdf.getPage(pageNumber);
         var baseViewport = page.getViewport({ scale: 1 });
         var availableWidth = Math.max(1, previewContainer.clientWidth);
-        var outputScale = Math.min(window.devicePixelRatio || 1, 2);
+        var outputScale = Math.min(window.devicePixelRatio || 1, 1.5);
         var viewport = page.getViewport({ scale: availableWidth / baseViewport.width });
         var canvas = document.createElement('canvas');
         canvas.className = 'mobile-pdf-page';
