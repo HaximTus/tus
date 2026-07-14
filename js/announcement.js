@@ -6,7 +6,7 @@
 
   /* ========== 公告内容 ========== */
   var HEADER_HTML =
-    '<div class="announcement-date">二〇二六年六月十九日</div>' +
+    '<div class="announcement-date">二〇二六年七月十四日</div>' +
     '<div class="announcement-header-row">' +
       '<div class="announcement-title" id="announcementTitle">公告</div>' +
       '<div class="announcement-seal">A</div>' +
@@ -14,16 +14,17 @@
 
   var BODY_HTML =
     '<p>致同学们：</p>' +
-    '<p>Tus 的网站功能已基本完成，现在最缺的是各门课程的试卷资料。</p>' +
-    '<p>如果你手中有尚未收录的期中、期末或往年试题，欢迎上传并分享给更多同学。每一份试卷，都会让后来的备考更有方向。</p>' +
-    '<p>感谢大家一起把 Tus 建成真正属于北工大学生的试卷共享库。</p>' +
+    '<p>Tus 北京工业大学试卷共享平台现已完成基础功能建设，当前继续征集各课程的期中、期末及历年试卷资料。</p>' +
+    '<p><strong>本次更新：登录系统正式上线。</strong>用户可以注册账户并在不同设备上登录，账户用于识别试卷提交者并保护提交流程。浏览、搜索及下载已收录试卷无需登录；上传新试卷时需要先登录。</p>' +
+    '<p>如持有尚未收录的试卷，欢迎登录后提交。提交内容将进入审核队列，经维护者审核后发布，以保证资料的准确性与可用性。</p>' +
+    '<p>感谢各位同学对试卷共享平台建设的支持。</p>' +
     '<div class="announcement-signature-wrapper">' +
       '<span class="announcement-signature">— Haxim Tus</span>' +
       '<span class="announcement-stamp">H</span>' +
     '</div>';
 
   /* ========== 存储键 ========== */
-  var SEEN_KEY = 'tus_announcement_seen_20260713';
+  var SEEN_KEY = 'tus_announcement_seen_20260714';
 
   /* ========== 构建 DOM ========== */
   function buildOverlay() {
