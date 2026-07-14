@@ -230,6 +230,20 @@ function getPreviewProxyUrl(fileUrl) {
     return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
 }
 
+function getDownloadProxyUrl(fileUrl, downloadName) {
+    var apiBase = window.TusAuth && window.TusAuth.apiBase;
+    if (!apiBase) return null;
+    var marker = '/assets/papers/';
+    var index = fileUrl.indexOf(marker);
+    if (index === -1) return null;
+    var paperName = fileUrl.slice(index + marker.length).split(/[?#]/)[0];
+    try { paperName = decodeURIComponent(paperName); } catch (error) { /* keep the original path */ }
+    if (!/\.(?:pdf|doc|docx)$/i.test(paperName)) return null;
+    var paperPath = 'assets/papers/' + paperName;
+    return apiBase + '/papers/download?path=' + encodeURIComponent(paperPath)
+        + '&name=' + encodeURIComponent(downloadName || paperName);
+}
+
 function preloadPdfs(papers) {
     var count = 0;
     for (var i = 0; i < papers.length; i++) {
@@ -264,6 +278,7 @@ function showPaperDetail(paper) {
     var setterRow = paper.setter ? '<div class="detail-row"><span class="detail-label">出卷人</span><span class="detail-value">' + escapeHtml(paper.setter) + '</span></div>' : '';
 
     var originalUrl = paper.fileUrl;
+    var downloadUrl = getDownloadProxyUrl(originalUrl, paper.downloadName) || originalUrl;
     var isPdf = !paper.isWord;
     var absoluteUrl = originalUrl.indexOf('://') === -1
         ? window.location.origin + originalUrl
@@ -311,7 +326,7 @@ function showPaperDetail(paper) {
         // 底部按钮
         + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
         + '<button type="button" class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-ispdf="' + (isPdf ? '1' : '0') + '" aria-pressed="false">在线预览</button>'
-        + '<a href="' + escapeAttr(originalUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
+        + '<a href="' + escapeAttr(downloadUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
         + '<button type="button" class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
         + '</div>';
