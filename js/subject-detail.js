@@ -224,7 +224,9 @@ function getPreviewProxyUrl(fileUrl) {
     var marker = '/assets/papers/';
     var index = fileUrl.indexOf(marker);
     if (index === -1) return null;
-    var paperPath = 'assets/papers/' + fileUrl.slice(index + marker.length).split(/[?#]/)[0];
+    var paperName = fileUrl.slice(index + marker.length).split(/[?#]/)[0];
+    try { paperName = decodeURIComponent(paperName); } catch (error) { /* keep the original path */ }
+    var paperPath = 'assets/papers/' + paperName;
     return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
 }
 
