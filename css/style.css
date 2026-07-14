@@ -635,23 +635,42 @@ main {
     to { transform: rotate(360deg); }
 }
 
-.preview-iframe,
 .word-container,
-.pdf-container {
+.pdf-container,
+.pdf-viewer {
     width: 100%;
     flex: 1;
     border: none;
     background: #525252;
     min-height: 0;
 }
-.preview-iframe {
-    display: block;
-    max-width: 100%;
-    min-width: 0;
+.pdf-viewer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    background: #525252;
+    min-height: 100%;
+}
+.pdf-page-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: #f5f5f4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     overflow: hidden;
 }
-.mobile-pdf-container {
-    display: none;
+.pdf-page-shell.is-rendered {
+    min-height: 0 !important;
+}
+.pdf-page-shell .pdf-page {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    background: #fff;
 }
 .word-container {
     background: #525252;
@@ -702,6 +721,9 @@ main {
     border-radius: 2px;
 }
 html.dark .pdf-container {
+    background: #333;
+}
+html.dark .pdf-viewer {
     background: #333;
 }
 
@@ -784,12 +806,7 @@ html.dark .pdf-container {
         width: 100% !important;
         max-width: 100% !important;
     }
-    .paper-detail-card.preview-mode .preview-iframe {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-    }
-    .paper-detail-card.preview-mode .mobile-pdf-container {
+    .paper-detail-card.preview-mode .pdf-viewer {
         width: 100%;
         max-width: 100%;
         min-width: 0;
@@ -800,7 +817,7 @@ html.dark .pdf-container {
         background: #525252;
         overflow-x: hidden;
     }
-    .paper-detail-card.preview-mode .mobile-pdf-page {
+    .paper-detail-card.preview-mode .pdf-page {
         display: block;
         width: 100% !important;
         max-width: 100% !important;
@@ -828,9 +845,6 @@ html.dark .preview-loading {
 html.dark .preview-loading .spinner {
     border-color: #3d3630;
     border-top-color: #eab308;
-}
-html.dark .preview-iframe {
-    background: #333;
 }
 html.dark .word-container {
     background: #333;
