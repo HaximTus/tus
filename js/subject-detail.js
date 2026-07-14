@@ -218,6 +218,10 @@ function getAbsoluteUrl(url) {
     return url.indexOf('://') === -1 ? window.location.origin + url : url;
 }
 
+function isQuarkBrowser() {
+    return /(?:^|\s)Quark(?:PC)?\//i.test(navigator.userAgent || '');
+}
+
 function getPreviewProxyUrl(fileUrl) {
     var apiBase = window.TusAuth && window.TusAuth.apiBase;
     if (!apiBase || !/\.pdf(?:$|[?#])/i.test(fileUrl)) return null;
@@ -278,11 +282,15 @@ function showPaperDetail(paper) {
     var setterRow = paper.setter ? '<div class="detail-row"><span class="detail-label">出卷人</span><span class="detail-value">' + escapeHtml(paper.setter) + '</span></div>' : '';
 
     var originalUrl = paper.fileUrl;
-    var downloadUrl = getDownloadProxyUrl(originalUrl, paper.downloadName) || originalUrl;
     var isPdf = !paper.isWord;
     var absoluteUrl = originalUrl.indexOf('://') === -1
         ? window.location.origin + originalUrl
         : originalUrl;
+    // Quark ignores or intercepts cross-origin download links. Keep Alibaba Cloud
+    // as the default source, but use the same-origin GitHub Pages copy there.
+    var downloadUrl = isQuarkBrowser()
+        ? absoluteUrl
+        : (getDownloadProxyUrl(originalUrl, paper.downloadName) || originalUrl);
 
     // 预览区
     // PDF → iframe 加载 preview.html（CDN 备降）
@@ -577,7 +585,7 @@ function exitPreviewMode(overlay) {
 }
 
 function enhanceMobilePdf(overlay, previewUrl) {
-    if (!window.matchMedia('(max-width: 640px)').matches) return;
+    if (!window.matchMedia('(max-width: 640px)').matches && !isQuarkBrowser()) return;
     var card = overlay.querySelector('#paperDetailCard');
     var generation = (card._pdfRenderGeneration || 0) + 1;
     card._pdfRenderGeneration = generation;
@@ -601,12 +609,23 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
     var previewContainer = overlay.querySelector('#previewContainer');
     var container = overlay.querySelector('#mobilePdfContainer');
     var iframe = overlay.querySelector('#previewIframe');
-    var pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
+    var loadingTask;
+    if (isQuarkBrowser()) {
+        // Quark's customized network stack is unreliable with cross-origin PDF
+        // range streaming. A complete fetch keeps rendering inside PDF.js.
+        var response = await fetch(previewUrl, { cache: 'force-cache' });
+        if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
+        var pdfData = new Uint8Array(await response.arrayBuffer());
+        loadingTask = pdfjsLib.getDocument({ data: pdfData });
+    } else {
+        loadingTask = pdfjsLib.getDocument({ url: previewUrl });
+    }
+    var pdf = await loadingTask.promise;
     if (generation !== card._pdfRenderGeneration || !overlay.isConnected) {
-        await pdf.destroy();
+        await loadingTask.destroy();
         return;
     }
-    card._mobilePdfDocument = pdf;
+    card._mobilePdfDocument = loadingTask;
     container.innerHTML = '';
 
     for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
