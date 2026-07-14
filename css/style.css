@@ -727,6 +727,9 @@ html.dark .pdf-container {
 
 .paper-detail-card.preview-mode .detail-footer {
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    background: #fcfaf7;
 }
 
 /* 返回详情按钮（同预览按钮样式） */
@@ -745,6 +748,9 @@ html.dark .pdf-container {
     min-width: 0;
     background: #f0ece6;
     color: #3d3430;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 1;
 }
 .detail-back-btn:hover {
     background: #e4dcd2;
@@ -844,6 +850,9 @@ html.dark .detail-back-btn {
 }
 html.dark .detail-back-btn:hover {
     background: #4a4038;
+}
+html.dark .paper-detail-card.preview-mode .detail-footer {
+    background: #2d2824;
 }
 
 /* ===== 暗色模式弹窗 ===== */
