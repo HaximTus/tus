@@ -676,7 +676,7 @@ async function adminDeploy() {
         'css/style.css', 'css/tailwind.css', 'css/announcement.css', 'css/auth.css',
         'js/api-client.js', 'js/auth.js', 'js/index.js', 'js/subject-detail.js', 'js/submit.js', 'js/ui.js', 'js/announcement.js', 'js/admin.js',
         'js/docx-preview.min.js', 'js/jszip.min.js',
-        'js/pdf.min.mjs', 'js/pdf.worker.min.mjs', 'js/pdf-mobile-preview.mjs',
+        'js/pdf.min.mjs', 'js/pdf.worker.min.mjs', 'js/pdf.compat.min.js', 'js/pdf.worker.compat.min.js', 'js/pdf-mobile-preview.mjs',
         'favicon.svg',
         'scripts/manage.js', 'scripts/deploy-via-api.js'
     ];
