@@ -678,10 +678,13 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 4px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 .pdf-container .pdf-page {
+    display: block;
     max-width: 100%;
     height: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -754,6 +757,10 @@ html.dark .pdf-container {
     }
     .preview-container {
         max-height: 40vh;
+    }
+    .paper-detail-card.preview-mode .pdf-container {
+        gap: 3px;
+        padding: 0;
     }
     .paper-detail-overlay {
         padding: 0;
