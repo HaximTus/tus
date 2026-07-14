@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账户 - Tus</title>
+    <meta name="description" content="登录或注册 Tus 账户。浏览试卷无需登录，提交试卷时需要账户。">
+    <link rel="icon" href="favicon.svg">
+    <script>if(location.protocol==='http:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1')location.href=location.href.replace(/^http:/,'https:')</script>
+    <script>if(localStorage.getItem('tus_dark')==='1')document.documentElement.classList.add('dark')</script>
+    <link rel="stylesheet" href="css/tailwind.css?v=4">
+    <link rel="stylesheet" href="css/style.css?v=4">
+    <link rel="stylesheet" href="css/announcement.css?v=5">
+    <link rel="stylesheet" href="css/auth.css?v=5">
+</head>
+<body class="auth-body" data-announcement-auto="false">
+    <nav class="auth-nav">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="." class="text-2xl font-bold text-stone-800 dark:text-stone-100 tracking-tight">Tus</a>
+            <div class="flex items-center gap-3">
+                <span class="nav-announcement" id="navAnnouncement">公告</span>
+                <a href="account.html" class="nav-account" id="navAccount">登录</a>
+                <button class="dark-toggle" id="darkToggle" aria-label="切换暗色模式">暗</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="account-layout">
+        <section class="account-intro" aria-labelledby="accountPageTitle">
+            <a class="account-back" href="."><span aria-hidden="true">&larr;</span> 返回试卷库</a>
+
+            <div class="archive-heading">
+                <p class="archive-kicker">BJUT · EXAM ARCHIVE</p>
+                <h1 id="accountPageTitle"><span>Tus</span> 账户</h1>
+                <p class="archive-lead">试卷向所有同学开放。只有在贡献新试卷时，我们才需要知道提交者是谁。</p>
+            </div>
+
+            <dl class="access-ledger" aria-label="账户使用范围">
+                <div>
+                    <dt>浏览与下载</dt>
+                    <dd>无需登录</dd>
+                </div>
+                <div>
+                    <dt>提交试卷</dt>
+                    <dd>登录后使用</dd>
+                </div>
+            </dl>
+
+            <div class="archive-signature" aria-hidden="true">
+                <span class="archive-code">TUS / 2026</span>
+                <span class="archive-line"></span>
+                <span class="archive-seal">卷</span>
+            </div>
+        </section>
+
+        <section class="account-entry" aria-label="账户入口">
+            <div id="authGuest" class="account-form-wrap">
+                <div class="entry-heading">
+                    <p class="entry-number">登记入口 · 01</p>
+                    <h2 id="authTitle">登录账户</h2>
+                    <p id="authHint">继续提交试卷，或管理这台设备上的登录状态。</p>
+                </div>
+
+                <div class="auth-tabs" role="tablist" aria-label="账户操作">
+                    <button class="auth-tab is-active" id="loginTab" type="button" role="tab" aria-selected="true">登录</button>
+                    <button class="auth-tab" id="registerTab" type="button" role="tab" aria-selected="false">注册</button>
+                </div>
+
+                <form id="authForm" class="auth-form" novalidate>
+                    <input type="hidden" id="authMode" value="login">
+                    <div class="auth-field">
+                        <label for="authUsername">用户名</label>
+                        <input id="authUsername" name="username" type="text" autocomplete="username" minlength="3" maxlength="24" required placeholder="3-24 位字母、数字或下划线">
+                    </div>
+                    <div class="auth-field">
+                        <label for="authPassword">密码</label>
+                        <input id="authPassword" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="至少 8 位">
+                    </div>
+                    <div id="confirmPasswordRow" class="auth-field hidden">
+                        <label for="authConfirmPassword">确认密码</label>
+                        <input id="authConfirmPassword" name="confirm-password" type="password" autocomplete="new-password" minlength="8" placeholder="再次输入密码">
+                    </div>
+                    <button id="authSubmit" class="auth-submit" type="submit">登录</button>
+                    <p id="authMessage" class="auth-message hidden" role="alert"></p>
+                </form>
+
+                <a class="browse-without-login" href=".">暂不登录，直接浏览试卷 <span aria-hidden="true">&rarr;</span></a>
+            </div>
+
+            <div id="authSignedIn" class="account-signed-in hidden">
+                <p class="entry-number">登记完成 · 02</p>
+                <div class="signed-in-mark" aria-hidden="true">已登录</div>
+                <p class="signed-in-label">当前账户</p>
+                <h2 id="accountName"></h2>
+                <p>你的登录状态会保存在这台设备上。所有账户目前拥有相同权限。</p>
+                <a id="accountContinue" class="auth-submit account-continue" href=".">返回试卷库</a>
+                <button id="authLogout" class="auth-logout" type="button">退出登录</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/announcement.js?v=5"></script>
+    <script src="js/auth.js?v=2"></script>
+    <script src="js/ui.js?v=4"></script>
+</body>
+</html>
