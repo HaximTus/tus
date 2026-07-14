@@ -237,6 +237,42 @@ function getDownloadProxyUrl(fileUrl, downloadName) {
         + '&name=' + encodeURIComponent(downloadName || 'paper.pdf');
 }
 
+function previewLoaderHtml() {
+    return '<div class="preview-loader" role="status" aria-live="polite">'
+        + '<div class="paper-loader" aria-hidden="true">'
+        +   '<span class="paper-loader-back"></span>'
+        +   '<span class="paper-loader-sheet"><i></i><i></i><i></i><b></b></span>'
+        + '</div>'
+        + '<p class="preview-progress-status">正在准备试卷...</p>'
+        + '<div class="preview-progress-track" role="progressbar" aria-label="预览加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">'
+        +   '<span class="preview-progress-fill"></span>'
+        + '</div>'
+        + '<span class="preview-progress-value">0%</span>'
+        + '</div>';
+}
+
+function updatePreviewProgress(overlay, progress, status) {
+    var loading = overlay && overlay.querySelector('#previewLoading');
+    if (!loading) return;
+    var value = Math.max(0, Math.min(100, Math.round(progress || 0)));
+    var statusElement = loading.querySelector('.preview-progress-status');
+    var fill = loading.querySelector('.preview-progress-fill');
+    var progressBar = loading.querySelector('.preview-progress-track');
+    var valueElement = loading.querySelector('.preview-progress-value');
+    if (statusElement && status) statusElement.textContent = status;
+    if (fill) fill.style.width = value + '%';
+    if (progressBar) progressBar.setAttribute('aria-valuenow', String(value));
+    if (valueElement) valueElement.textContent = value + '%';
+}
+
+function resetPreviewLoader(overlay) {
+    var loading = overlay && overlay.querySelector('#previewLoading');
+    if (!loading) return;
+    loading.classList.remove('is-error');
+    loading.innerHTML = previewLoaderHtml();
+    loading.style.display = '';
+}
+
 function preloadPdfs(papers) {
     var count = 0;
     for (var i = 0; i < papers.length; i++) {
@@ -306,19 +342,17 @@ function showPaperDetail(paper) {
 
         // 预览区（初始隐藏）
         + '<div class="preview-container" id="previewContainer" style="display:none">'
-        +   '<div class="preview-loading" id="previewLoading">'
-        +     '<div class="spinner"></div>'
-        +     '<p>正在加载预览...</p>'
-        +   '</div>'
+        +   '<div class="preview-loading" id="previewLoading">' + previewLoaderHtml() + '</div>'
         +   viewerHtml
         + '</div>'
 
         // 底部按钮
         + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
         + '<button type="button" class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-fallbackurl="' + escapeAttr(isPdf ? (getPreviewProxyUrl(originalUrl) || '') : '') + '" data-ispdf="' + (isPdf ? '1' : '0') + '" aria-pressed="false">在线预览</button>'
-        + '<a href="' + escapeAttr(downloadUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
+        + '<a href="' + escapeAttr(downloadUrl) + '" target="tusDownloadTarget" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
         + '<button type="button" class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
+        + '<iframe class="download-target" name="tusDownloadTarget" title="下载文件"></iframe>'
         + '</div>';
 
     overlay.addEventListener('click', function(e) {
@@ -365,7 +399,7 @@ function enterPreviewMode(overlay) {
     // 隐藏信息区，显示预览区
     body.style.display = 'none';
     previewContainer.style.display = '';
-    previewLoading.style.display = '';
+    resetPreviewLoader(overlay);
 
     // 始终复用同一个按钮，避免移动端替换节点后丢失触控事件。
     previewBtn.className = 'detail-back-btn';
@@ -377,20 +411,19 @@ function enterPreviewMode(overlay) {
 
     if (isPdf) {
         var fallbackUrl = previewBtn.dataset.fallbackurl || '';
+        updatePreviewProgress(overlay, 2, '正在唤醒预览组件...');
         enhanceMobilePdf(overlay, previewUrl, fallbackUrl);
-        // 8 秒超时提示
-        var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
+        // 网络较慢时保留动画并更新状态，不把用户引导离开预览。
         card._previewTimeoutId = setTimeout(function() {
             if (previewLoading.style.display !== 'none') {
-                previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
-                    + '加载较慢，请稍候。'
-                    + '<br><a href="' + dlHref + '" download style="color:#ca8a04;">直接下载文件</a></p>';
+                var progressTrack = previewLoading.querySelector('.preview-progress-track');
+                var current = Number(progressTrack && progressTrack.getAttribute('aria-valuenow')) || 5;
+                updatePreviewProgress(overlay, current, '网络有点慢，试卷还在路上...');
             }
         }, 8000);
     } else {
         // Word: 纯前端 docx-preview 渲染
         var wordContainer = overlay.querySelector('#wordContainer');
-        var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
 
         // 动态加载 JSZip + docx-preview（本地文件，无需外部服务）
         function loadDocxPreview() {
@@ -413,10 +446,11 @@ function enterPreviewMode(overlay) {
         loadDocxPreview();
 
         function renderWord() {
-            previewLoading.querySelector('p').textContent = '正在渲染文档...';
+            updatePreviewProgress(overlay, 35, '正在展开文档...');
             fetch(previewUrl)
                 .then(function(r) { return r.arrayBuffer(); })
                 .then(function(buffer) {
+                    updatePreviewProgress(overlay, 75, '正在排版页面...');
                     return docx.renderAsync(buffer, wordContainer, null, {
                         className: 'docx-preview',
                         inWrapper: true,
@@ -427,6 +461,7 @@ function enterPreviewMode(overlay) {
                     });
                 })
                 .then(function() {
+                    updatePreviewProgress(overlay, 100, '预览准备好了');
                     previewLoading.style.display = 'none';
                     wordContainer.style.display = '';
                     // 清理 docx-preview 注入的 style 标签（它们会导致多余间距）
@@ -446,10 +481,8 @@ function enterPreviewMode(overlay) {
         }
 
         function showWordFallback() {
-            previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
-                + '预览加载失败。<br>'
-                + '试试 <a href="' + dlHref + '" download style="color:#ca8a04;">下载文件</a>'
-                + ' 在本地打开</p>';
+            previewLoading.classList.add('is-error');
+            updatePreviewProgress(overlay, 0, '预览加载失败，请返回详情后重试');
         }
 
         // docx-preview 渲染超时（15秒）
@@ -482,8 +515,7 @@ function exitPreviewMode(overlay) {
     card._pdfRenderState = null;
 
     var previewLoading = overlay.querySelector('#previewLoading');
-    previewLoading.style.display = '';
-    previewLoading.innerHTML = '<div class="spinner"></div><p>正在加载预览...</p>';
+    resetPreviewLoader(overlay);
 
     // 恢复头部文字
     header.textContent = '试卷信息';
@@ -550,6 +582,7 @@ function enhanceMobilePdf(overlay, previewUrl, fallbackUrl) {
         if (!window.TusMobilePdfReady) return;
         window.TusMobilePdfReady.then(function(pdfjsLib) {
             if (!pdfjsLib || generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+            updatePreviewProgress(overlay, 5, '正在读取试卷...');
             return renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, generation);
         }).catch(function(error) {
             console.warn('PDF preview unavailable:', error);
@@ -561,16 +594,40 @@ function enhanceMobilePdf(overlay, previewUrl, fallbackUrl) {
     else window.addEventListener('tus:mobile-pdf-init', startEnhancement, { once: true });
 }
 
-async function fetchPdfBytes(primaryUrl, fallbackUrl) {
+async function fetchPdfBytes(primaryUrl, fallbackUrl, onProgress) {
     var urls = fallbackUrl && fallbackUrl !== primaryUrl ? [primaryUrl, fallbackUrl] : [primaryUrl];
     var lastError;
     for (var i = 0; i < urls.length; i++) {
         try {
             var response = await fetch(urls[i], { cache: 'force-cache' });
             if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
-            return new Uint8Array(await response.arrayBuffer());
+            var total = Number(response.headers.get('Content-Length')) || 0;
+            if (!response.body || typeof response.body.getReader !== 'function') {
+                var buffer = await response.arrayBuffer();
+                if (onProgress) onProgress(buffer.byteLength, buffer.byteLength, true);
+                return new Uint8Array(buffer);
+            }
+            var reader = response.body.getReader();
+            var chunks = [];
+            var received = 0;
+            while (true) {
+                var result = await reader.read();
+                if (result.done) break;
+                chunks.push(result.value);
+                received += result.value.byteLength;
+                if (onProgress) onProgress(received, total, false);
+            }
+            var bytes = new Uint8Array(received);
+            var offset = 0;
+            for (var chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+                bytes.set(chunks[chunkIndex], offset);
+                offset += chunks[chunkIndex].byteLength;
+            }
+            if (onProgress) onProgress(received, total || received, true);
+            return bytes;
         } catch (error) {
             lastError = error;
+            if (i + 1 < urls.length && onProgress) onProgress(0, 0, false, true);
         }
     }
     throw lastError || new Error('PDF fetch failed');
@@ -581,10 +638,9 @@ function showPdfFallback(overlay) {
     var card = overlay.querySelector('#paperDetailCard');
     var loading = overlay.querySelector('#previewLoading');
     if (!card || !loading || !card.classList.contains('preview-mode')) return;
-    var downloadUrl = card.querySelector('.detail-download-btn').getAttribute('href');
     loading.style.display = '';
-    loading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
-        + '预览加载失败。<br><a href="' + downloadUrl + '" download style="color:#ca8a04;">直接下载文件</a></p>';
+    loading.classList.add('is-error');
+    updatePreviewProgress(overlay, 0, '预览加载失败，请返回详情后重试');
 }
 
 async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, generation) {
@@ -593,8 +649,24 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, gener
     var container = overlay.querySelector('#pdfViewer');
     var previewLoading = overlay.querySelector('#previewLoading');
     container.dataset.pdfjsVersion = pdfjsLib.version || 'unknown';
-    var pdfData = await fetchPdfBytes(previewUrl, fallbackUrl);
+    var indeterminateProgress = 8;
+    var pdfData = await fetchPdfBytes(previewUrl, fallbackUrl, function(received, total, done, switchedSource) {
+        if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+        if (switchedSource) {
+            indeterminateProgress = 8;
+            updatePreviewProgress(overlay, indeterminateProgress, '正在切换加载线路...');
+            return;
+        }
+        var progress;
+        if (total > 0) progress = 8 + (received / total) * 70;
+        else {
+            indeterminateProgress = Math.min(72, indeterminateProgress + 3);
+            progress = indeterminateProgress;
+        }
+        updatePreviewProgress(overlay, done ? 78 : progress, done ? '试卷读取完成' : '正在读取试卷...');
+    });
     if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+    updatePreviewProgress(overlay, 82, '正在解析页面...');
     var loadingTask = pdfjsLib.getDocument({ data: pdfData });
     var pdf = await loadingTask.promise;
     if (generation !== card._pdfRenderGeneration || !overlay.isConnected) {
@@ -602,6 +674,7 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, gener
         return;
     }
     card._mobilePdfDocument = loadingTask;
+    updatePreviewProgress(overlay, 90, '正在绘制第一页...');
     container.innerHTML = '';
     container.style.display = 'flex';
 
@@ -636,7 +709,10 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, gener
         state.rendering[pageNumber] = false;
         if (state.observer) state.observer.unobserve(shell);
         if (pageNumber === 1) {
-            previewLoading.style.display = 'none';
+            updatePreviewProgress(overlay, 100, '预览准备好了');
+            setTimeout(function() {
+                if (generation === card._pdfRenderGeneration && overlay.isConnected) previewLoading.style.display = 'none';
+            }, 180);
             if (card._previewTimeoutId) {
                 clearTimeout(card._previewTimeoutId);
                 card._previewTimeoutId = null;
