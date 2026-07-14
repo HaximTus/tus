@@ -234,7 +234,8 @@ function getDownloadProxyUrl(fileUrl, downloadName) {
     var previewUrl = getPreviewProxyUrl(fileUrl);
     if (!previewUrl) return '';
     return previewUrl.replace('/papers/preview?', '/papers/download?')
-        + '&name=' + encodeURIComponent(downloadName || 'paper.pdf');
+        + '&name=' + encodeURIComponent(downloadName || 'paper.pdf')
+        + '&downloadVersion=2';
 }
 
 function previewLoaderHtml() {
@@ -352,7 +353,7 @@ function showPaperDetail(paper) {
         + '<a href="' + escapeAttr(downloadUrl) + '" target="tusDownloadTarget" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
         + '<button type="button" class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
-        + '<iframe class="download-target" name="tusDownloadTarget" title="下载文件"></iframe>'
+        + '<iframe class="download-target" name="tusDownloadTarget" title="下载文件" aria-hidden="true" tabindex="-1"></iframe>'
         + '</div>';
 
     overlay.addEventListener('click', function(e) {
