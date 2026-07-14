@@ -230,7 +230,22 @@ function getPreviewProxyUrl(fileUrl) {
     return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
 }
 
+var pdfJsModulePromise = null;
+function loadPdfJsModule() {
+    if (!pdfJsModulePromise) {
+        pdfJsModulePromise = import('./pdf.min.mjs').then(function(pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.mjs';
+            return pdfjsLib;
+        }).catch(function(error) {
+            pdfJsModulePromise = null;
+            throw error;
+        });
+    }
+    return pdfJsModulePromise;
+}
+
 function preloadPdfs(papers) {
+    loadPdfJsModule().catch(function() {});
     var count = 0;
     for (var i = 0; i < papers.length; i++) {
         var p = papers[i];
@@ -241,9 +256,13 @@ function preloadPdfs(papers) {
         var encodedPath = encodeURI(p.file_path || '');
         var fileUrl = p.file_url || getBaseUrl() + '/assets/papers/' + encodedPath;
         var absUrl = getAbsoluteUrl(fileUrl);
+        var proxyUrl = getPreviewProxyUrl(absUrl);
         // 只 fetch 不存结果，浏览器 HTTP 缓存会自动保存
         // 用户点击预览时 fetch 会直接从磁盘读取，几乎无延迟
-        fetch(absUrl, { cache: 'force-cache' }).catch(function() {});
+        fetch(proxyUrl || absUrl, {
+            cache: 'force-cache',
+            headers: proxyUrl ? { Range: 'bytes=0-65535' } : undefined
+        }).catch(function() {});
     }
 }
 
@@ -476,9 +495,17 @@ function enterPreviewMode(overlay) {
 async function renderPdfPreview(overlay, previewUrl, previewLoading) {
     var container = overlay.querySelector('#pdfContainer');
     try {
-        var pdfjsLib = await import('./pdf.min.mjs');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.mjs';
-        var pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
+        var pdfjsLib = await loadPdfJsModule();
+        var pdf;
+        for (var attempt = 0; attempt < 2; attempt++) {
+            try {
+                pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
+                break;
+            } catch (error) {
+                if (attempt === 1) throw error;
+                await new Promise(function(resolve) { setTimeout(resolve, 900); });
+            }
+        }
         container.innerHTML = '';
         container.style.display = 'flex';
 
