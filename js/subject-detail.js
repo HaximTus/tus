@@ -230,22 +230,7 @@ function getPreviewProxyUrl(fileUrl) {
     return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
 }
 
-var pdfJsModulePromise = null;
-function loadPdfJsModule() {
-    if (!pdfJsModulePromise) {
-        pdfJsModulePromise = import('js/pdf.min.mjs').then(function(pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.mjs';
-            return pdfjsLib;
-        }).catch(function(error) {
-            pdfJsModulePromise = null;
-            throw error;
-        });
-    }
-    return pdfJsModulePromise;
-}
-
 function preloadPdfs(papers) {
-    loadPdfJsModule().catch(function() {});
     var count = 0;
     for (var i = 0; i < papers.length; i++) {
         var p = papers[i];
@@ -256,13 +241,9 @@ function preloadPdfs(papers) {
         var encodedPath = encodeURI(p.file_path || '');
         var fileUrl = p.file_url || getBaseUrl() + '/assets/papers/' + encodedPath;
         var absUrl = getAbsoluteUrl(fileUrl);
-        var proxyUrl = getPreviewProxyUrl(absUrl);
         // 只 fetch 不存结果，浏览器 HTTP 缓存会自动保存
         // 用户点击预览时 fetch 会直接从磁盘读取，几乎无延迟
-        fetch(proxyUrl || absUrl, {
-            cache: 'force-cache',
-            headers: proxyUrl ? { Range: 'bytes=0-65535' } : undefined
-        }).catch(function() {});
+        fetch(absUrl, { cache: 'force-cache' }).catch(function() {});
     }
 }
 
@@ -495,24 +476,18 @@ function enterPreviewMode(overlay) {
 async function renderPdfPreview(overlay, previewUrl, previewLoading) {
     var container = overlay.querySelector('#pdfContainer');
     try {
-        var pdfjsLib = await loadPdfJsModule();
-        var pdf;
-        for (var attempt = 0; attempt < 2; attempt++) {
-            try {
-                pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
-                break;
-            } catch (error) {
-                if (attempt === 1) throw error;
-                await new Promise(function(resolve) { setTimeout(resolve, 900); });
-            }
-        }
+        var moduleUrl = new URL('js/pdf.min.mjs', document.baseURI).href;
+        var workerUrl = new URL('js/pdf.worker.min.mjs', document.baseURI).href;
+        var pdfjsLib = await import(moduleUrl);
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+        var pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
         container.innerHTML = '';
         container.style.display = 'flex';
 
         async function renderPage(pageNumber) {
             var page = await pdf.getPage(pageNumber);
             var baseViewport = page.getViewport({ scale: 1 });
-            var availableWidth = Math.max(280, container.clientWidth - 4);
+            var availableWidth = Math.max(1, container.clientWidth);
             var outputScale = Math.min(window.devicePixelRatio || 1, 2);
             var scale = availableWidth / baseViewport.width;
             var viewport = page.getViewport({ scale: scale });
@@ -530,10 +505,9 @@ async function renderPdfPreview(overlay, previewUrl, previewLoading) {
             }).promise;
         }
 
-        await renderPage(1);
-        previewLoading.style.display = 'none';
-        for (var pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
+        for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
             await renderPage(pageNumber);
+            if (pageNumber === 1) previewLoading.style.display = 'none';
         }
     } catch (error) {
         console.error('PDF preview failed:', error);
