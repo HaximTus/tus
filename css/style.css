@@ -718,6 +718,10 @@ main {
 .preview-loading.is-error .preview-progress-value {
     display: none;
 }
+html.dark .preview-progress-status { color: #d6cec4; }
+html.dark .preview-progress-track { background: #4a4038; }
+html.dark .preview-progress-fill { background: #eab308; }
+html.dark .preview-progress-value { color: #a69a8e; }
 .download-target {
     position: fixed;
     width: 1px;
