@@ -25,7 +25,7 @@
     '</div>';
 
   /* ========== 存储键 ========== */
-  var SEEN_KEY = 'tus_announcement_seen_20260714_progress_binary_download';
+  var SEEN_KEY = 'tus_announcement_seen_20260714_progress_binary_download_v2';
 
   /* ========== 构建 DOM ========== */
   function buildOverlay() {
