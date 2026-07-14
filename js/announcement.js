@@ -14,18 +14,16 @@
 
   var BODY_HTML =
     '<p>致同学们：</p>' +
-    '<p>今天，Tus 开始面向部分学生进行测试运行。网站可能有一些不尽如人意的地方，希望同学们可以提一些意见。</p>' +
-    '<p>Tus 为了减轻同学们考试周的负担，为了北京工业大学学生的试卷自由而生。</p>' +
-    '<p>目前网站仅收录部分测试试卷。为构建一个学生无任何付出即可获取自己所需试卷的理想世界，我们不强制但鼓励同学们上传 Tus 未收录的试卷。开源项目需要同学们的共同维护。</p>' +
-    '<p>另外，欢迎大家为我的项目 <a href="https://github.com/HaximTus/tus" target="_blank">github.com/HaximTus/tus</a> 点一颗小星星。</p>' +
-    '<p>十分感谢同学们的支持。</p>' +
+    '<p>Tus 的网站功能已基本完成，现在最缺的是各门课程的试卷资料。</p>' +
+    '<p>如果你手中有尚未收录的期中、期末或往年试题，欢迎上传并分享给更多同学。每一份试卷，都会让后来的备考更有方向。</p>' +
+    '<p>感谢大家一起把 Tus 建成真正属于北工大学生的试卷共享库。</p>' +
     '<div class="announcement-signature-wrapper">' +
       '<span class="announcement-signature">— Haxim Tus</span>' +
       '<span class="announcement-stamp">H</span>' +
     '</div>';
 
   /* ========== 存储键 ========== */
-  var SEEN_KEY = 'tus_announcement_seen_20260619';
+  var SEEN_KEY = 'tus_announcement_seen_20260713';
 
   /* ========== 构建 DOM ========== */
   function buildOverlay() {
@@ -88,6 +86,9 @@
         window.showAnnouncement();
       });
     }
+
+    // 登录等任务页面可保留公告入口，但不自动打断当前流程。
+    if (document.body && document.body.getAttribute('data-announcement-auto') === 'false') return;
 
     // 首次访问 → 展示公告
     if (localStorage.getItem(SEEN_KEY)) return;
