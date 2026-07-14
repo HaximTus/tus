@@ -272,7 +272,8 @@ function showPaperDetail(paper) {
     if (isPdf) {
         var proxyUrl = getPreviewProxyUrl(originalUrl);
         previewUrl = proxyUrl || absoluteUrl;
-        viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank" scrolling="yes" style="display:none;"></iframe>';
+        viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank" scrolling="yes" style="display:none;"></iframe>'
+            + '<div class="mobile-pdf-container" id="mobilePdfContainer" style="display:none;"></div>';
     } else {
         previewUrl = absoluteUrl;
         viewerHtml = '<div class="word-container" id="wordContainer" style="display:none;"></div>';
@@ -392,6 +393,7 @@ function enterPreviewMode(overlay) {
             iframe.style.display = 'block';
         };
         iframe.src = previewUrl;
+        enhanceMobilePdf(overlay, previewUrl);
         // 8 秒超时提示
         var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
         card._previewTimeoutId = setTimeout(function() {
@@ -496,6 +498,16 @@ function exitPreviewMode(overlay) {
         iframe.style.display = 'none';
         iframe.src = 'about:blank';
     }
+    card._pdfRenderGeneration = (card._pdfRenderGeneration || 0) + 1;
+    if (card._mobilePdfDocument) {
+        card._mobilePdfDocument.destroy().catch(function() {});
+        card._mobilePdfDocument = null;
+    }
+    var mobilePdfContainer = overlay.querySelector('#mobilePdfContainer');
+    if (mobilePdfContainer) {
+        mobilePdfContainer.style.display = 'none';
+        mobilePdfContainer.innerHTML = '';
+    }
     var previewLoading = overlay.querySelector('#previewLoading');
     previewLoading.style.display = '';
     previewLoading.innerHTML = '<div class="spinner"></div><p>正在加载预览...</p>';
@@ -527,6 +539,65 @@ function exitPreviewMode(overlay) {
 
     // 移除预览样式
     card.classList.remove('preview-mode');
+}
+
+function enhanceMobilePdf(overlay, previewUrl) {
+    if (!window.matchMedia('(max-width: 640px)').matches) return;
+    var card = overlay.querySelector('#paperDetailCard');
+    var generation = (card._pdfRenderGeneration || 0) + 1;
+    card._pdfRenderGeneration = generation;
+
+    function startEnhancement() {
+        if (!window.TusMobilePdfReady) return;
+        window.TusMobilePdfReady.then(function(pdfjsLib) {
+            if (!pdfjsLib || generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+            return renderMobilePdf(pdfjsLib, overlay, previewUrl, generation);
+        }).catch(function(error) {
+            console.warn('Mobile PDF enhancement unavailable:', error);
+        });
+    }
+
+    if (window.TusMobilePdfReady) startEnhancement();
+    else window.addEventListener('tus:mobile-pdf-init', startEnhancement, { once: true });
+}
+
+async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
+    var card = overlay.querySelector('#paperDetailCard');
+    var previewContainer = overlay.querySelector('#previewContainer');
+    var container = overlay.querySelector('#mobilePdfContainer');
+    var iframe = overlay.querySelector('#previewIframe');
+    var pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
+    if (generation !== card._pdfRenderGeneration || !overlay.isConnected) {
+        await pdf.destroy();
+        return;
+    }
+    card._mobilePdfDocument = pdf;
+    container.innerHTML = '';
+
+    for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+        var page = await pdf.getPage(pageNumber);
+        var baseViewport = page.getViewport({ scale: 1 });
+        var availableWidth = Math.max(1, previewContainer.clientWidth);
+        var outputScale = Math.min(window.devicePixelRatio || 1, 2);
+        var viewport = page.getViewport({ scale: availableWidth / baseViewport.width });
+        var canvas = document.createElement('canvas');
+        canvas.className = 'mobile-pdf-page';
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = Math.floor(viewport.width) + 'px';
+        canvas.style.height = Math.floor(viewport.height) + 'px';
+        container.appendChild(canvas);
+        await page.render({
+            canvasContext: canvas.getContext('2d'),
+            viewport: viewport,
+            transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0]
+        }).promise;
+        if (pageNumber === 1 && generation === card._pdfRenderGeneration) {
+            container.style.display = 'flex';
+            iframe.style.display = 'none';
+        }
+    }
 }
 
 function closePaperDetail(overlay) {
