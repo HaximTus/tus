@@ -233,7 +233,7 @@ function getPreviewProxyUrl(fileUrl) {
 var pdfJsModulePromise = null;
 function loadPdfJsModule() {
     if (!pdfJsModulePromise) {
-        pdfJsModulePromise = import('./pdf.min.mjs').then(function(pdfjsLib) {
+        pdfJsModulePromise = import('js/pdf.min.mjs').then(function(pdfjsLib) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.min.mjs';
             return pdfjsLib;
         }).catch(function(error) {
