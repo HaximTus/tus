@@ -230,6 +230,13 @@ function getPreviewProxyUrl(fileUrl) {
     return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
 }
 
+function getDownloadProxyUrl(fileUrl, downloadName) {
+    var previewUrl = getPreviewProxyUrl(fileUrl);
+    if (!previewUrl) return '';
+    return previewUrl.replace('/papers/preview?', '/papers/download?')
+        + '&name=' + encodeURIComponent(downloadName || 'paper.pdf');
+}
+
 function preloadPdfs(papers) {
     var count = 0;
     for (var i = 0; i < papers.length; i++) {
@@ -266,7 +273,10 @@ function showPaperDetail(paper) {
     var absoluteUrl = originalUrl.indexOf('://') === -1
         ? window.location.origin + originalUrl
         : originalUrl;
-    var downloadUrl = absoluteUrl;
+    var downloadFallbackUrl = getDownloadProxyUrl(originalUrl, paper.downloadName);
+    // 生产环境直接走带 attachment 响应头的阿里云接口。相比异步 Blob 点击，
+    // 这在 Safari、QQ 浏览器等会严格限制用户手势的浏览器中更可靠。
+    var downloadUrl = downloadFallbackUrl || absoluteUrl;
 
     // PDF 与 Word 都从当前站点的同源文件加载。
     var previewUrl;
@@ -333,24 +343,6 @@ function showPaperDetail(paper) {
     overlay.querySelector('#paperDetailCard').dataset.previewUrl = previewUrl;
     void overlay.offsetWidth;
 
-    var downloadBtn = overlay.querySelector('.detail-download-btn');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', function() {
-            showDownloadStamp(downloadBtn);
-        });
-    }
-}
-
-function showDownloadStamp(button) {
-    var oldStamp = button.querySelector('.download-stamp');
-    if (oldStamp) oldStamp.remove();
-    var stamp = document.createElement('span');
-    stamp.className = 'download-stamp';
-    stamp.textContent = '已开始下载';
-    button.appendChild(stamp);
-    setTimeout(function() {
-        if (stamp.parentNode) stamp.parentNode.removeChild(stamp);
-    }, 700);
 }
 
 function enterPreviewMode(overlay) {
@@ -600,6 +592,7 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, gener
     var previewContainer = overlay.querySelector('#previewContainer');
     var container = overlay.querySelector('#pdfViewer');
     var previewLoading = overlay.querySelector('#previewLoading');
+    container.dataset.pdfjsVersion = pdfjsLib.version || 'unknown';
     var pdfData = await fetchPdfBytes(previewUrl, fallbackUrl);
     if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
     var loadingTask = pdfjsLib.getDocument({ data: pdfData });
