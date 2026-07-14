@@ -607,6 +607,7 @@ main {
     max-height: 50vh;
     border-bottom: 1px solid #ece6de;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .preview-loading {
@@ -685,6 +686,7 @@ main {
 }
 .pdf-container .pdf-page {
     display: block;
+    width: 100%;
     max-width: 100%;
     height: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -759,8 +761,13 @@ html.dark .pdf-container {
         max-height: 40vh;
     }
     .paper-detail-card.preview-mode .pdf-container {
+        width: 100%;
         gap: 3px;
         padding: 0;
+    }
+    .paper-detail-card.preview-mode .pdf-page {
+        width: 100% !important;
+        max-width: 100% !important;
     }
     .paper-detail-overlay {
         padding: 0;
