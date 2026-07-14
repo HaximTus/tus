@@ -218,6 +218,16 @@ function getAbsoluteUrl(url) {
     return url.indexOf('://') === -1 ? window.location.origin + url : url;
 }
 
+function getPreviewProxyUrl(fileUrl) {
+    var apiBase = window.TusAuth && window.TusAuth.apiBase;
+    if (!apiBase || !/\.pdf(?:$|[?#])/i.test(fileUrl)) return null;
+    var marker = '/assets/papers/';
+    var index = fileUrl.indexOf(marker);
+    if (index === -1) return null;
+    var paperPath = 'assets/papers/' + fileUrl.slice(index + marker.length).split(/[?#]/)[0];
+    return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
+}
+
 function preloadPdfs(papers) {
     var count = 0;
     for (var i = 0; i < papers.length; i++) {
@@ -262,7 +272,8 @@ function showPaperDetail(paper) {
         var ghPagesUrl = absoluteUrl.indexOf('github.io') >= 0
             ? absoluteUrl
             : 'https://HaximTus.github.io/tus' + originalUrl;
-        previewUrl = 'preview.html?url=' + encodeURIComponent(ghPagesUrl);
+        var proxyUrl = getPreviewProxyUrl(originalUrl);
+        previewUrl = proxyUrl || ('preview.html?url=' + encodeURIComponent(ghPagesUrl));
         viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank"></iframe>';
     } else {
         previewUrl = absoluteUrl;
