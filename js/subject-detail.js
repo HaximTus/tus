@@ -270,13 +270,9 @@ function showPaperDetail(paper) {
     var previewUrl;
     var viewerHtml;
     if (isPdf) {
-        // 始终用 GitHub Pages 完整 URL，确保 preview.html 能识别并走 jsDelivr CDN
-        var ghPagesUrl = absoluteUrl.indexOf('github.io') >= 0
-            ? absoluteUrl
-            : 'https://HaximTus.github.io/tus' + originalUrl;
         var proxyUrl = getPreviewProxyUrl(originalUrl);
-        previewUrl = proxyUrl || ('preview.html?url=' + encodeURIComponent(ghPagesUrl));
-        viewerHtml = '<div class="pdf-container" id="pdfContainer" style="display:none;"></div>';
+        previewUrl = proxyUrl || absoluteUrl;
+        viewerHtml = '<iframe class="preview-iframe" id="previewIframe" src="about:blank" scrolling="yes" style="display:none;"></iframe>';
     } else {
         previewUrl = absoluteUrl;
         viewerHtml = '<div class="word-container" id="wordContainer" style="display:none;"></div>';
@@ -330,6 +326,7 @@ function showPaperDetail(paper) {
     });
 
     document.body.appendChild(overlay);
+    overlay.querySelector('#paperDetailCard').dataset.previewUrl = previewUrl;
     void overlay.offsetWidth;
 
     var downloadBtn = overlay.querySelector('.detail-download-btn');
@@ -388,8 +385,13 @@ function enterPreviewMode(overlay) {
     card.classList.add('preview-mode');
 
     if (isPdf) {
-        // PDF: 本地 PDF.js 渲染，使用阿里云代理的 Range 请求。
-        renderPdfPreview(overlay, previewUrl, previewLoading);
+        // PDF: 复用单一原生 iframe，始终加载首次生成的阿里云代理 URL。
+        var iframe = overlay.querySelector('#previewIframe');
+        iframe.onload = function() {
+            previewLoading.style.display = 'none';
+            iframe.style.display = 'block';
+        };
+        iframe.src = previewUrl;
         // 8 秒超时提示
         var dlHref = card.querySelector('.detail-download-btn').getAttribute('href');
         card._previewTimeoutId = setTimeout(function() {
@@ -473,86 +475,6 @@ function enterPreviewMode(overlay) {
     }
 }
 
-async function renderPdfPreview(overlay, previewUrl, previewLoading) {
-    var container = overlay.querySelector('#pdfContainer');
-    try {
-        var pdfjsLib = await waitForPdfJs();
-        var pdf = await pdfjsLib.getDocument({
-            url: previewUrl,
-            disableRange: false,
-            disableStream: false,
-            disableAutoFetch: true
-        }).promise;
-        container.innerHTML = '';
-        container.style.display = 'flex';
-
-        async function renderPage(pageNumber) {
-            var page = await pdf.getPage(pageNumber);
-            var baseViewport = page.getViewport({ scale: 1 });
-            var availableWidth = Math.max(1, container.clientWidth);
-            var outputScale = Math.min(window.devicePixelRatio || 1, 2);
-            var scale = availableWidth / baseViewport.width;
-            var viewport = page.getViewport({ scale: scale });
-            var canvas = document.createElement('canvas');
-            canvas.className = 'pdf-page';
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = Math.floor(viewport.width) + 'px';
-            canvas.style.height = Math.floor(viewport.height) + 'px';
-            container.appendChild(canvas);
-            await page.render({
-                canvasContext: canvas.getContext('2d'),
-                viewport: viewport,
-                transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0]
-            }).promise;
-        }
-
-        var nextPage = 1;
-        var rendering = false;
-
-        async function renderNextPage() {
-            if (rendering || nextPage > pdf.numPages || !container.isConnected) return;
-            rendering = true;
-            try {
-                await renderPage(nextPage++);
-                previewLoading.style.display = 'none';
-            } finally {
-                rendering = false;
-            }
-        }
-
-        container.addEventListener('scroll', function() {
-            var remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-            if (remaining < container.clientHeight * 1.25) renderNextPage();
-        }, { passive: true });
-
-        await renderNextPage();
-    } catch (error) {
-        console.error('PDF preview failed:', error);
-        container.style.display = 'none';
-        var fallback = document.createElement('iframe');
-        fallback.className = 'preview-iframe';
-        fallback.src = previewUrl;
-        fallback.addEventListener('load', function() { previewLoading.style.display = 'none'; });
-        container.parentNode.appendChild(fallback);
-    }
-}
-
-function waitForPdfJs() {
-    if (window.TusPdfPreview) return Promise.resolve(window.TusPdfPreview);
-    return new Promise(function(resolve, reject) {
-        var timer = setTimeout(function() {
-            window.removeEventListener('tus:pdf-ready', onReady);
-            reject(new Error('PDF.js loading timed out'));
-        }, 20000);
-        function onReady() {
-            clearTimeout(timer);
-            resolve(window.TusPdfPreview);
-        }
-        window.addEventListener('tus:pdf-ready', onReady, { once: true });
-    });
-}
-
 function exitPreviewMode(overlay) {
     var card = overlay.querySelector('#paperDetailCard');
     var header = overlay.querySelector('#detailHeader');
@@ -569,7 +491,14 @@ function exitPreviewMode(overlay) {
     var wordContainer = overlay.querySelector('#wordContainer');
     if (wordContainer) { wordContainer.style.display = 'none'; wordContainer.innerHTML = ''; }
     var iframe = overlay.querySelector('#previewIframe');
-    if (iframe) iframe.src = 'about:blank';
+    if (iframe) {
+        iframe.onload = null;
+        iframe.style.display = 'none';
+        iframe.src = 'about:blank';
+    }
+    var previewLoading = overlay.querySelector('#previewLoading');
+    previewLoading.style.display = '';
+    previewLoading.innerHTML = '<div class="spinner"></div><p>正在加载预览...</p>';
 
     // 恢复头部文字
     header.textContent = '试卷信息';
@@ -582,17 +511,7 @@ function exitPreviewMode(overlay) {
     var backBtn = overlay.querySelector('#previewBtn');
     if (backBtn) {
         var isPdf = card.dataset.previewIsPdf !== '0';
-        var downloadHref = card.querySelector('.detail-download-btn').getAttribute('href');
-        var absoluteUrl = downloadHref.indexOf('://') === -1
-            ? window.location.origin + downloadHref
-            : downloadHref;
-        var newPreviewUrl = isPdf
-            ? 'preview.html?url=' + encodeURIComponent(
-                absoluteUrl.indexOf('github.io') >= 0
-                    ? absoluteUrl
-                    : 'https://HaximTus.github.io/tus' + downloadHref
-              )
-            : absoluteUrl;
+        var newPreviewUrl = card.dataset.previewUrl || '';
 
         var previewBtn = document.createElement('button');
         previewBtn.className = 'detail-preview-btn';
