@@ -1,8 +1,19 @@
-window.TusMobilePdfReady = import('./pdf.legacy.min.mjs').then(function(pdfjsLib) {
-    var workerUrl = new URL('./pdf.worker.legacy.min.mjs', import.meta.url).href;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-    fetch(workerUrl, { cache: 'force-cache' }).catch(function() {});
-    return pdfjsLib;
-});
+(function () {
+    function loadScript(src) {
+        return new Promise(function(resolve, reject) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = function() { reject(new Error('PDF script failed: ' + src)); };
+            document.head.appendChild(script);
+        });
+    }
 
-window.dispatchEvent(new Event('tus:mobile-pdf-init'));
+    window.TusMobilePdfReady = loadScript('js/pdf.compat.min.js?v=1').then(function() {
+        if (!window.pdfjsLib) throw new Error('PDF.js did not initialize');
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.compat.min.js?v=1';
+        return window.pdfjsLib;
+    });
+
+    window.dispatchEvent(new Event('tus:mobile-pdf-init'));
+})();
