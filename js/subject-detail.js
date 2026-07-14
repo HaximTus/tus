@@ -305,9 +305,9 @@ function showPaperDetail(paper) {
 
         // 底部按钮
         + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
-        + '<button class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-ispdf="' + (isPdf ? '1' : '0') + '">在线预览</button>'
+        + '<button type="button" class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-ispdf="' + (isPdf ? '1' : '0') + '" aria-pressed="false">在线预览</button>'
         + '<a href="' + escapeAttr(originalUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
-        + '<button class="detail-close-btn" id="closeBtn">关闭</button>'
+        + '<button type="button" class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
         + '</div>';
 
@@ -317,8 +317,11 @@ function showPaperDetail(paper) {
 
     var previewBtn = overlay.querySelector('#previewBtn');
     if (previewBtn) {
-        previewBtn.addEventListener('click', function() {
-            enterPreviewMode(overlay);
+        previewBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            var card = overlay.querySelector('#paperDetailCard');
+            if (card.classList.contains('preview-mode')) exitPreviewMode(overlay);
+            else enterPreviewMode(overlay);
         });
     }
 
@@ -372,15 +375,10 @@ function enterPreviewMode(overlay) {
     previewContainer.style.display = '';
     previewLoading.style.display = '';
 
-    // 预览按钮 → 返回按钮
-    var backBtn = document.createElement('button');
-    backBtn.className = 'detail-back-btn';
-    backBtn.id = 'previewBtn';
-    backBtn.textContent = '← 返回详情';
-    backBtn.addEventListener('click', function() {
-        exitPreviewMode(overlay);
-    });
-    previewBtn.parentNode.replaceChild(backBtn, previewBtn);
+    // 始终复用同一个按钮，避免移动端替换节点后丢失触控事件。
+    previewBtn.className = 'detail-back-btn';
+    previewBtn.textContent = '← 返回详情';
+    previewBtn.setAttribute('aria-pressed', 'true');
 
     // 卡片切换到预览模式（样式放大）
     card.classList.add('preview-mode');
@@ -519,22 +517,12 @@ function exitPreviewMode(overlay) {
     body.style.display = '';
     previewContainer.style.display = 'none';
 
-    // 返回按钮 → 预览按钮（从 card.dataset 读取文件类型）
-    var backBtn = overlay.querySelector('#previewBtn');
-    if (backBtn) {
-        var isPdf = card.dataset.previewIsPdf !== '0';
-        var newPreviewUrl = card.dataset.previewUrl || '';
-
-        var previewBtn = document.createElement('button');
+    // 恢复同一按钮，原有 URL、文件类型及事件监听均保持不变。
+    var previewBtn = overlay.querySelector('#previewBtn');
+    if (previewBtn) {
         previewBtn.className = 'detail-preview-btn';
-        previewBtn.id = 'previewBtn';
-        previewBtn.dataset.previewurl = newPreviewUrl;
-        previewBtn.dataset.ispdf = isPdf ? '1' : '0';
         previewBtn.textContent = '在线预览';
-        previewBtn.addEventListener('click', function() {
-            enterPreviewMode(overlay);
-        });
-        backBtn.parentNode.replaceChild(previewBtn, backBtn);
+        previewBtn.setAttribute('aria-pressed', 'false');
     }
 
     // 移除预览样式
