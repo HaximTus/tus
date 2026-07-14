@@ -60,6 +60,8 @@ const FILES_TO_UPLOAD = [
     'js/jszip.min.js',
     'js/pdf.min.mjs',
     'js/pdf.worker.min.mjs',
+    'js/pdf.legacy.min.mjs',
+    'js/pdf.worker.legacy.min.mjs',
     'js/pdf-mobile-preview.mjs',
     'favicon.svg',
     'CLAUDE.md',
