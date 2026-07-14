@@ -646,6 +646,7 @@ main {
 }
 .pdf-viewer {
     display: flex;
+    flex: 0 0 auto;
     flex-direction: column;
     align-items: center;
     gap: 6px;
