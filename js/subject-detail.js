@@ -476,11 +476,13 @@ function enterPreviewMode(overlay) {
 async function renderPdfPreview(overlay, previewUrl, previewLoading) {
     var container = overlay.querySelector('#pdfContainer');
     try {
-        var moduleUrl = new URL('js/pdf.min.mjs', document.baseURI).href;
-        var workerUrl = new URL('js/pdf.worker.min.mjs', document.baseURI).href;
-        var pdfjsLib = await import(moduleUrl);
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-        var pdf = await pdfjsLib.getDocument({ url: previewUrl }).promise;
+        var pdfjsLib = await waitForPdfJs();
+        var pdf = await pdfjsLib.getDocument({
+            url: previewUrl,
+            disableRange: false,
+            disableStream: false,
+            disableAutoFetch: true
+        }).promise;
         container.innerHTML = '';
         container.style.display = 'flex';
 
@@ -505,16 +507,50 @@ async function renderPdfPreview(overlay, previewUrl, previewLoading) {
             }).promise;
         }
 
-        for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-            await renderPage(pageNumber);
-            if (pageNumber === 1) previewLoading.style.display = 'none';
+        var nextPage = 1;
+        var rendering = false;
+
+        async function renderNextPage() {
+            if (rendering || nextPage > pdf.numPages || !container.isConnected) return;
+            rendering = true;
+            try {
+                await renderPage(nextPage++);
+                previewLoading.style.display = 'none';
+            } finally {
+                rendering = false;
+            }
         }
+
+        container.addEventListener('scroll', function() {
+            var remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+            if (remaining < container.clientHeight * 1.25) renderNextPage();
+        }, { passive: true });
+
+        await renderNextPage();
     } catch (error) {
         console.error('PDF preview failed:', error);
-        previewLoading.innerHTML = '<p style="color:#9e9488;font-size:13px;line-height:1.8;">'
-            + '预览加载失败，请 <a href="' + escapeAttr(previewUrl) + '" target="_blank" rel="noopener" style="color:#ca8a04;">在新标签页打开</a>'
-            + ' 或直接下载文件。</p>';
+        container.style.display = 'none';
+        var fallback = document.createElement('iframe');
+        fallback.className = 'preview-iframe';
+        fallback.src = previewUrl;
+        fallback.addEventListener('load', function() { previewLoading.style.display = 'none'; });
+        container.parentNode.appendChild(fallback);
     }
+}
+
+function waitForPdfJs() {
+    if (window.TusPdfPreview) return Promise.resolve(window.TusPdfPreview);
+    return new Promise(function(resolve, reject) {
+        var timer = setTimeout(function() {
+            window.removeEventListener('tus:pdf-ready', onReady);
+            reject(new Error('PDF.js loading timed out'));
+        }, 20000);
+        function onReady() {
+            clearTimeout(timer);
+            resolve(window.TusPdfPreview);
+        }
+        window.addEventListener('tus:pdf-ready', onReady, { once: true });
+    });
 }
 
 function exitPreviewMode(overlay) {
