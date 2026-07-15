@@ -43,6 +43,7 @@ const FILES_TO_UPLOAD = [
     'submit.html',
     'admin.html',
     'preview.html',
+    'download-worker.js',
     'css/tailwind.css',
     'css/style.css',
     'css/announcement.css',
