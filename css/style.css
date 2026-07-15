@@ -601,6 +601,7 @@ main {
 
 /* ===== 弹窗内嵌预览 ===== */
 .preview-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 420px;
@@ -608,9 +609,14 @@ main {
     border-bottom: 1px solid #ece6de;
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .preview-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -618,6 +624,7 @@ main {
     gap: 14px;
     padding: 48px 20px;
     color: #9e9488;
+    background: #fcfaf7;
     font-size: 14px;
     font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
 }
@@ -722,16 +729,6 @@ html.dark .preview-progress-status { color: #d6cec4; }
 html.dark .preview-progress-track { background: #4a4038; }
 html.dark .preview-progress-fill { background: #eab308; }
 html.dark .preview-progress-value { color: #a69a8e; }
-.download-target {
-    position: fixed;
-    width: 1px;
-    height: 1px;
-    right: 0;
-    bottom: 0;
-    border: 0;
-    opacity: 0;
-    pointer-events: none;
-}
 @keyframes paper-loader-flip {
     0%, 18%, 100% { transform: rotateY(0deg); }
     48%, 68% { transform: rotateY(-22deg) translateX(-2px); }
@@ -763,7 +760,8 @@ html.dark .preview-progress-value { color: #a69a8e; }
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    width: min(100%, 820px);
+    flex: 0 0 auto;
     background: #f5f5f4;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     overflow: hidden;
@@ -835,9 +833,12 @@ html.dark .pdf-viewer {
 
 /* 预览模式：卡片放大，全屏适配 */
 .paper-detail-card.preview-mode {
-    max-width: 800px;
-    height: 88vh;
-    max-height: 88vh;
+    width: min(960px, calc(100vw - 40px));
+    max-width: 960px;
+    height: calc(100vh - 40px);
+    height: min(900px, calc(100dvh - 40px));
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
     display: flex;
     flex-direction: column;
 }
@@ -888,7 +889,9 @@ html.dark .pdf-viewer {
     .paper-detail-card.preview-mode {
         max-width: 100%;
         width: 100%;
+        height: 100vh;
         height: 100dvh;
+        max-height: 100vh;
         max-height: 100dvh;
         border-radius: 0;
     }
@@ -934,11 +937,11 @@ html.dark .pdf-viewer {
         padding: 0;
     }
     .paper-detail-card.preview-mode .detail-header {
-        padding: 14px 16px 10px;
+        padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
         font-size: 14px;
     }
     .paper-detail-card.preview-mode .detail-footer {
-        padding: 10px 12px 14px;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     }
 }
 
@@ -947,6 +950,7 @@ html.dark .preview-container {
 }
 html.dark .preview-loading {
     color: #8a7e72;
+    background: #2d2824;
 }
 html.dark .preview-loading .spinner {
     border-color: #3d3630;
