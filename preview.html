@@ -37,7 +37,7 @@
     <div class="bar">
         <span>Tus · PDF 预览</span>
         <span class="status" id="status">准备中…</span>
-        <a href="#" id="downloadLink" target="_blank">📥 下载</a>
+        <a href="#" id="downloadLink" download>📥 下载</a>
     </div>
     <div id="viewerWrap" class="loading">
         <div class="spinner"></div>
@@ -55,17 +55,21 @@
             return;
         }
 
-        document.getElementById('downloadLink').href = ghUrl;
-
-        // 解析 GitHub Pages URL，构造多种回源地址
-        // ghUrl: https://HaximTus.github.io/tus/assets/papers/file.pdf
-        var match = ghUrl.match(/https:\/\/([^\/]+)\.github\.io\/([^\/]+)\/(.+)/);
-        var repoWithOwner = null;
-        var filePath = null;
-        if (match) {
-            repoWithOwner = match[1] + '/' + match[2];  // HaximTus/tus
-            filePath = match[3];                         // assets/papers/file.pdf
+        var parsedUrl;
+        try { parsedUrl = new URL(ghUrl, location.href); } catch (error) { parsedUrl = null; }
+        var marker = '/assets/papers/';
+        var markerIndex = parsedUrl ? parsedUrl.pathname.indexOf(marker) : -1;
+        if (markerIndex === -1) {
+            document.getElementById('status').textContent = '❌ 文件地址无效';
+            return;
         }
+        var filePath = parsedUrl.pathname.slice(markerIndex + 1);
+        var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        var sourceOrigin = isLocal ? location.origin : 'https://haximtus.cn';
+        var sameOriginUrl = sourceOrigin + '/' + filePath;
+        var downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = sameOriginUrl;
+        downloadLink.setAttribute('download', decodeURIComponent(filePath.split('/').pop()));
 
         var statusEl = document.getElementById('status');
         var loadMsg = document.getElementById('loadMsg');
@@ -95,60 +99,11 @@
             });
         }
 
-        // 构建回源列表：CDN → 自定义域名直连 → embed 兜底
-        var attempts = [];
-
-        // 1) jsDelivr CDN（在中国有时慢，需要 URL 编码中文路径）
-        if (repoWithOwner && filePath) {
-            var encodedPath = encodeURI(filePath);
-            attempts.push({
-                url: 'https://cdn.jsdelivr.net/gh/' + repoWithOwner + '@main/' + encodedPath,
-                label: 'jsDelivr CDN',
-                timeout: 8000
-            });
-        }
-
-        // 2) raw.githubusercontent.com（GitHub 原始文件，通常中国可访问）
-        if (repoWithOwner && filePath) {
-            var encodedPath = encodeURI(filePath);
-            attempts.push({
-                url: 'https://raw.githubusercontent.com/' + repoWithOwner + '/main/' + encodedPath,
-                label: 'GitHub Raw',
-                timeout: 6000
-            });
-        }
-
-        // 3) 自定义域名 HTTPS 直连
-        //    当 ghUrl 是 github.io URL 时，301 会跳到 http://haximtus.cn（HTTP！）
-        //    所以我们手动构造 HTTPS URL 绕过跳转
-        if (filePath) {
-            attempts.push({
-                url: 'https://haximtus.cn/' + filePath,
-                label: 'haximtus.cn',
-                timeout: 5000
-            });
-        }
-
-        function tryNext(idx) {
-            if (idx >= attempts.length) {
-                // 所有 fetch 都失败，直接用 embed 加载源文件（浏览器原生 PDF 阅读器）
-                // 注意：ghUrl 本身是 github.io，会被跳转到 HTTP，但 embed 在某些浏览器仍可工作
-                document.getElementById('viewerWrap').style.display = 'none';
-                var embed = document.getElementById('pdfViewer');
-                embed.src = ghUrl;
-                embed.style.display = '';
-                statusEl.textContent = '✅ 直接加载';
-                return;
-            }
-            var attempt = attempts[idx];
-            loadFrom(attempt.url, attempt.label, attempt.timeout)
-                .catch(function(err) {
-                    console.warn(attempt.label + ' 失败:', err.message);
-                    tryNext(idx + 1);
-                });
-        }
-
-        tryNext(0);
+        loadFrom(sameOriginUrl, 'haximtus.cn', 8000).catch(function(error) {
+            console.warn('haximtus.cn 加载失败:', error.message);
+            statusEl.textContent = '❌ 加载失败';
+            loadMsg.textContent = '暂时无法加载试卷';
+        });
     })();
     </script>
 </body>
