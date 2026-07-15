@@ -678,6 +678,7 @@ async function adminDeploy() {
         'js/docx-preview.min.js', 'js/jszip.min.js',
         'js/pdf.min.mjs', 'js/pdf.worker.min.mjs', 'js/pdf.compat.min.js', 'js/pdf.worker.compat.min.js', 'js/pdf-mobile-preview.mjs',
         'favicon.svg',
+        'docs/icp-same-origin-migration.md',
         'scripts/manage.js', 'scripts/deploy-via-api.js'
     ];
 
