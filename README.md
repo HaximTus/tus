@@ -45,6 +45,7 @@ node scripts/deploy-via-api.js
 - [ ] 积分系统
 - [ ] 积分排行榜
 - [ ] 用户评论
+- [ ] ICP 备案与主站同源部署（备案和阿里云接入备案生效后执行，见 [`docs/icp-same-origin-migration.md`](docs/icp-same-origin-migration.md)）
 
 ## 贡献
 如果你想分享试卷，可通过网站右上角「提交试卷」直接上传，或联系管理员。
