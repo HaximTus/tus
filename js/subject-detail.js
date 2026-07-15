@@ -1,5 +1,7 @@
 // Tus - 科目详情页逻辑
 
+var downloadWorkerReady = registerDownloadWorker();
+
 document.addEventListener('DOMContentLoaded', async function() {
     const params = new URLSearchParams(window.location.search);
     const subjectId = params.get('id');
@@ -224,6 +226,116 @@ function getSameOriginPaperUrl(filePath) {
     return siteOrigin + '/assets/papers/' + encodeURI(filePath || '');
 }
 
+function registerDownloadWorker() {
+    if (!('serviceWorker' in navigator)) return Promise.resolve(false);
+
+    return navigator.serviceWorker.register(getBaseUrl() + '/download-worker.js?v=1', {
+        scope: getBaseUrl() + '/'
+    }).then(function() {
+        return navigator.serviceWorker.ready;
+    }).then(function() {
+        if (navigator.serviceWorker.controller) return true;
+        return new Promise(function(resolve) {
+            var settled = false;
+            function finish(value) {
+                if (settled) return;
+                settled = true;
+                navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+                resolve(value);
+            }
+            function onControllerChange() { finish(true); }
+            navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+            setTimeout(function() { finish(Boolean(navigator.serviceWorker.controller)); }, 3000);
+        });
+    }).catch(function(error) {
+        console.warn('Download worker unavailable:', error);
+        return false;
+    });
+}
+
+function getDownloadRequestUrl(fileUrl, downloadName) {
+    var url = new URL(fileUrl, window.location.href);
+    url.searchParams.set('tus-download', '1');
+    url.searchParams.set('name', downloadName);
+    return url.href;
+}
+
+function startWorkerDownload(fileUrl, downloadName) {
+    var frame = document.createElement('iframe');
+    frame.hidden = true;
+    frame.setAttribute('aria-hidden', 'true');
+    frame.src = getDownloadRequestUrl(fileUrl, downloadName);
+    document.body.appendChild(frame);
+    setTimeout(function() {
+        if (frame.parentNode) frame.parentNode.removeChild(frame);
+    }, 60000);
+}
+
+function downloadPaperFile(fileUrl, downloadName, button) {
+    var url;
+    try {
+        url = new URL(fileUrl, window.location.href);
+    } catch (error) {
+        return Promise.reject(new Error('下载地址无效'));
+    }
+
+    if (url.origin !== window.location.origin || url.pathname.indexOf('/assets/papers/') !== 0) {
+        return Promise.reject(new Error('下载地址不是本站试卷文件'));
+    }
+
+    var originalText = button.textContent;
+    button.textContent = '正在下载...';
+    button.setAttribute('aria-busy', 'true');
+    button.style.pointerEvents = 'none';
+
+    function restoreButton() {
+        button.textContent = originalText;
+        button.removeAttribute('aria-busy');
+        button.style.pointerEvents = '';
+    }
+
+    return downloadWorkerReady.then(function(workerAvailable) {
+        if (workerAvailable) {
+            startWorkerDownload(url.href, downloadName);
+            return;
+        }
+        return fetchPaperBlob(url.href, downloadName);
+    }).then(function() {
+        restoreButton();
+    }, function(error) {
+        restoreButton();
+        throw error;
+    });
+}
+
+function fetchPaperBlob(fileUrl, downloadName) {
+    return fetch(fileUrl, { credentials: 'same-origin', cache: 'force-cache' })
+        .then(function(response) {
+            if (!response.ok) throw new Error('下载请求失败：' + response.status);
+            return response.blob();
+        })
+        .then(function(blob) {
+            if (!blob.size) throw new Error('下载文件为空');
+
+            if (window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, downloadName);
+                return;
+            }
+
+            var blobUrl = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = downloadName;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Safari may still be consuming the Blob URL after click returns.
+            setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 60000);
+        });
+}
+
 function previewLoaderHtml() {
     return '<div class="preview-loader" role="status" aria-live="polite">'
         + '<div class="paper-loader" aria-hidden="true">'
@@ -332,7 +444,7 @@ function showPaperDetail(paper) {
         // 底部按钮
         + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
         + '<button type="button" class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-ispdf="' + (isPdf ? '1' : '0') + '" aria-pressed="false">在线预览</button>'
-        + '<a href="' + escapeAttr(downloadUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
+        + '<a href="' + escapeAttr(downloadUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn" id="downloadBtn">下载文件</a>'
         + '<button type="button" class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
         + '</div>';
@@ -348,6 +460,19 @@ function showPaperDetail(paper) {
             var card = overlay.querySelector('#paperDetailCard');
             if (card.classList.contains('preview-mode')) exitPreviewMode(overlay);
             else enterPreviewMode(overlay);
+        });
+    }
+
+    var downloadBtn = overlay.querySelector('#downloadBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            if (downloadBtn.getAttribute('aria-busy') === 'true') return;
+            downloadPaperFile(downloadBtn.href, paper.downloadName, downloadBtn)
+                .catch(function(error) {
+                    console.error('Paper download failed:', error);
+                    window.alert('下载失败，请检查网络后重试。页面不会跳转。');
+                });
         });
     }
 
