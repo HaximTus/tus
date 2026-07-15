@@ -68,6 +68,7 @@ const FILES_TO_UPLOAD = [
     'favicon.svg',
     'CLAUDE.md',
     'README.md',
+    'docs/icp-same-origin-migration.md',
     'supabase-setup.sql',
     'data/subjects.json',
     'data/papers.json',
