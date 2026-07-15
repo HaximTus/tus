@@ -120,8 +120,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             var yearBadge = getYearBadge(paper.year);
             var fileSize = formatFileSize(paper.file_size);
             var rawPath = paper.file_path || '';
-            var encodedPath = encodeURI(rawPath);
-            var fileUrl = paper.file_url || getBaseUrl() + '/assets/papers/' + encodedPath;
+            var fileUrl = getSameOriginPaperUrl(rawPath);
             var gradeBadge = paper.grade
                 ? '<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">' + escapeHtml(paper.grade) + '</span>'
                 : '';
@@ -218,24 +217,11 @@ function getAbsoluteUrl(url) {
     return url.indexOf('://') === -1 ? window.location.origin + url : url;
 }
 
-function getPreviewProxyUrl(fileUrl) {
-    var apiBase = window.TusAuth && window.TusAuth.apiBase;
-    if (!apiBase || !/\.pdf(?:$|[?#])/i.test(fileUrl)) return null;
-    var marker = '/assets/papers/';
-    var index = fileUrl.indexOf(marker);
-    if (index === -1) return null;
-    var paperName = fileUrl.slice(index + marker.length).split(/[?#]/)[0];
-    try { paperName = decodeURIComponent(paperName); } catch (error) { /* keep the original path */ }
-    var paperPath = 'assets/papers/' + paperName;
-    return apiBase + '/papers/preview?path=' + encodeURIComponent(paperPath);
-}
-
-function getDownloadProxyUrl(fileUrl, downloadName) {
-    var previewUrl = getPreviewProxyUrl(fileUrl);
-    if (!previewUrl) return '';
-    return previewUrl.replace('/papers/preview?', '/papers/download?')
-        + '&name=' + encodeURIComponent(downloadName || 'paper.pdf')
-        + '&downloadVersion=2';
+function getSameOriginPaperUrl(filePath) {
+    var hostname = window.location.hostname.toLowerCase();
+    var isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    var siteOrigin = isLocal ? window.location.origin + getBaseUrl() : 'https://haximtus.cn';
+    return siteOrigin + '/assets/papers/' + encodeURI(filePath || '');
 }
 
 function previewLoaderHtml() {
@@ -282,8 +268,7 @@ function preloadPdfs(papers) {
         if (ext !== 'pdf') continue;
         // 限制最多预取 3 个，页面有几十个试卷时不影响网速
         if (++count > 3) break;
-        var encodedPath = encodeURI(p.file_path || '');
-        var fileUrl = p.file_url || getBaseUrl() + '/assets/papers/' + encodedPath;
+        var fileUrl = getSameOriginPaperUrl(p.file_path || '');
         var preloadUrl = getAbsoluteUrl(fileUrl);
         fetch(preloadUrl, { cache: 'force-cache' })
             .then(function(response) {
@@ -310,10 +295,7 @@ function showPaperDetail(paper) {
     var absoluteUrl = originalUrl.indexOf('://') === -1
         ? window.location.origin + originalUrl
         : originalUrl;
-    var downloadFallbackUrl = getDownloadProxyUrl(originalUrl, paper.downloadName);
-    // 生产环境直接走带 attachment 响应头的阿里云接口。相比异步 Blob 点击，
-    // 这在 Safari、QQ 浏览器等会严格限制用户手势的浏览器中更可靠。
-    var downloadUrl = downloadFallbackUrl || absoluteUrl;
+    var downloadUrl = absoluteUrl;
 
     // PDF 与 Word 都从当前站点的同源文件加载。
     var previewUrl;
@@ -349,11 +331,10 @@ function showPaperDetail(paper) {
 
         // 底部按钮
         + '<div class="detail-footer detail-footer-triple" id="detailFooter">'
-        + '<button type="button" class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-fallbackurl="' + escapeAttr(isPdf ? (getPreviewProxyUrl(originalUrl) || '') : '') + '" data-ispdf="' + (isPdf ? '1' : '0') + '" aria-pressed="false">在线预览</button>'
-        + '<a href="' + escapeAttr(downloadUrl) + '" target="tusDownloadTarget" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
+        + '<button type="button" class="detail-preview-btn" id="previewBtn" data-previewurl="' + escapeAttr(previewUrl) + '" data-ispdf="' + (isPdf ? '1' : '0') + '" aria-pressed="false">在线预览</button>'
+        + '<a href="' + escapeAttr(downloadUrl) + '" download="' + escapeAttr(paper.downloadName) + '" class="detail-download-btn">下载文件</a>'
         + '<button type="button" class="detail-close-btn" id="closeBtn">关闭</button>'
         + '</div>'
-        + '<iframe class="download-target" name="tusDownloadTarget" title="下载文件" aria-hidden="true" tabindex="-1"></iframe>'
         + '</div>';
 
     overlay.addEventListener('click', function(e) {
@@ -411,9 +392,8 @@ function enterPreviewMode(overlay) {
     card.classList.add('preview-mode');
 
     if (isPdf) {
-        var fallbackUrl = previewBtn.dataset.fallbackurl || '';
         updatePreviewProgress(overlay, 2, '正在唤醒预览组件...');
-        enhanceMobilePdf(overlay, previewUrl, fallbackUrl);
+        enhanceMobilePdf(overlay, previewUrl);
         // 网络较慢时保留动画并更新状态，不把用户引导离开预览。
         card._previewTimeoutId = setTimeout(function() {
             if (previewLoading.style.display !== 'none') {
@@ -574,7 +554,7 @@ function exitPreviewMode(overlay) {
     }
 }
 
-function enhanceMobilePdf(overlay, previewUrl, fallbackUrl) {
+function enhanceMobilePdf(overlay, previewUrl) {
     var card = overlay.querySelector('#paperDetailCard');
     var generation = (card._pdfRenderGeneration || 0) + 1;
     card._pdfRenderGeneration = generation;
@@ -584,7 +564,7 @@ function enhanceMobilePdf(overlay, previewUrl, fallbackUrl) {
         window.TusMobilePdfReady.then(function(pdfjsLib) {
             if (!pdfjsLib || generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
             updatePreviewProgress(overlay, 5, '正在读取试卷...');
-            return renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, generation);
+            return renderMobilePdf(pdfjsLib, overlay, previewUrl, generation);
         }).catch(function(error) {
             console.warn('PDF preview unavailable:', error);
             showPdfFallback(overlay);
@@ -595,43 +575,33 @@ function enhanceMobilePdf(overlay, previewUrl, fallbackUrl) {
     else window.addEventListener('tus:mobile-pdf-init', startEnhancement, { once: true });
 }
 
-async function fetchPdfBytes(primaryUrl, fallbackUrl, onProgress) {
-    var urls = fallbackUrl && fallbackUrl !== primaryUrl ? [primaryUrl, fallbackUrl] : [primaryUrl];
-    var lastError;
-    for (var i = 0; i < urls.length; i++) {
-        try {
-            var response = await fetch(urls[i], { cache: 'force-cache' });
-            if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
-            var total = Number(response.headers.get('Content-Length')) || 0;
-            if (!response.body || typeof response.body.getReader !== 'function') {
-                var buffer = await response.arrayBuffer();
-                if (onProgress) onProgress(buffer.byteLength, buffer.byteLength, true);
-                return new Uint8Array(buffer);
-            }
-            var reader = response.body.getReader();
-            var chunks = [];
-            var received = 0;
-            while (true) {
-                var result = await reader.read();
-                if (result.done) break;
-                chunks.push(result.value);
-                received += result.value.byteLength;
-                if (onProgress) onProgress(received, total, false);
-            }
-            var bytes = new Uint8Array(received);
-            var offset = 0;
-            for (var chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-                bytes.set(chunks[chunkIndex], offset);
-                offset += chunks[chunkIndex].byteLength;
-            }
-            if (onProgress) onProgress(received, total || received, true);
-            return bytes;
-        } catch (error) {
-            lastError = error;
-            if (i + 1 < urls.length && onProgress) onProgress(0, 0, false, true);
-        }
+async function fetchPdfBytes(url, onProgress) {
+    var response = await fetch(url, { cache: 'force-cache' });
+    if (!response.ok) throw new Error('PDF fetch failed: ' + response.status);
+    var total = Number(response.headers.get('Content-Length')) || 0;
+    if (!response.body || typeof response.body.getReader !== 'function') {
+        var buffer = await response.arrayBuffer();
+        if (onProgress) onProgress(buffer.byteLength, buffer.byteLength, true);
+        return new Uint8Array(buffer);
     }
-    throw lastError || new Error('PDF fetch failed');
+    var reader = response.body.getReader();
+    var chunks = [];
+    var received = 0;
+    while (true) {
+        var result = await reader.read();
+        if (result.done) break;
+        chunks.push(result.value);
+        received += result.value.byteLength;
+        if (onProgress) onProgress(received, total, false);
+    }
+    var bytes = new Uint8Array(received);
+    var offset = 0;
+    for (var chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+        bytes.set(chunks[chunkIndex], offset);
+        offset += chunks[chunkIndex].byteLength;
+    }
+    if (onProgress) onProgress(received, total || received, true);
+    return bytes;
 }
 
 function showPdfFallback(overlay) {
@@ -644,20 +614,15 @@ function showPdfFallback(overlay) {
     updatePreviewProgress(overlay, 0, '预览加载失败，请返回详情后重试');
 }
 
-async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, generation) {
+async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
     var card = overlay.querySelector('#paperDetailCard');
     var previewContainer = overlay.querySelector('#previewContainer');
     var container = overlay.querySelector('#pdfViewer');
     var previewLoading = overlay.querySelector('#previewLoading');
     container.dataset.pdfjsVersion = pdfjsLib.version || 'unknown';
     var indeterminateProgress = 8;
-    var pdfData = await fetchPdfBytes(previewUrl, fallbackUrl, function(received, total, done, switchedSource) {
+    var pdfData = await fetchPdfBytes(previewUrl, function(received, total, done) {
         if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
-        if (switchedSource) {
-            indeterminateProgress = 8;
-            updatePreviewProgress(overlay, indeterminateProgress, '正在切换加载线路...');
-            return;
-        }
         var progress;
         if (total > 0) progress = 8 + (received / total) * 70;
         else {
@@ -688,7 +653,7 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, gener
         state.rendering[pageNumber] = true;
         var page = await pdf.getPage(pageNumber);
         var baseViewport = page.getViewport({ scale: 1 });
-        var availableWidth = Math.max(1, container.clientWidth - 12);
+        var availableWidth = Math.max(1, Math.min(container.clientWidth - 12, 820));
         var outputScale = Math.min(window.devicePixelRatio || 1, 1.5);
         var viewport = page.getViewport({ scale: availableWidth / baseViewport.width });
         var canvas = document.createElement('canvas');
@@ -729,7 +694,8 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, fallbackUrl, gener
         shell.className = 'pdf-page-shell';
         shell.dataset.pageNumber = String(pageNumber);
         shell.style.aspectRatio = viewport.width + ' / ' + viewport.height;
-        shell.style.minHeight = Math.round(Math.max(1, container.clientWidth - 12) * viewport.height / viewport.width) + 'px';
+        var shellWidth = Math.max(1, Math.min(container.clientWidth - 12, 820));
+        shell.style.minHeight = Math.round(shellWidth * viewport.height / viewport.width) + 'px';
         container.appendChild(shell);
         return shell;
     }
