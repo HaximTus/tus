@@ -6,7 +6,7 @@
 
   /* ========== 公告内容 ========== */
   var HEADER_HTML =
-    '<div class="announcement-date">二〇二六年七月十四日</div>' +
+    '<div class="announcement-date">二〇二六年七月十五日</div>' +
     '<div class="announcement-header-row">' +
       '<div class="announcement-title" id="announcementTitle">公告</div>' +
       '<div class="announcement-seal">A</div>' +
