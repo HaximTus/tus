@@ -3,7 +3,7 @@
  * 首次进入播放全屏公告动画；之后从导航栏打开最终动态公告。
  */
 (function () {
-  var SEEN_KEY = 'tus_announcement_seen_20260716_motion_v1';
+  var SEEN_KEY = 'tus_announcement_seen_20260716_motion_v2';
   var DEMO_PATH = 'design-demos/announcement-zaha-flow-v2.html';
 
   function buildOverlay(animate) {
@@ -23,9 +23,6 @@
     frame.setAttribute('allowtransparency', 'true');
 
     overlay.appendChild(frame);
-    overlay.addEventListener('click', function (event) {
-      if (event.target === overlay) closeOverlay(overlay);
-    });
     overlay._frame = frame;
     return overlay;
   }
@@ -33,6 +30,8 @@
   function closeOverlay(overlay) {
     if (!overlay || overlay.classList.contains('is-closing')) return;
     overlay.classList.add('is-closing');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.style.pointerEvents = 'none';
     if (overlay._onAnnouncementKeydown) {
       document.removeEventListener('keydown', overlay._onAnnouncementKeydown);
     }
