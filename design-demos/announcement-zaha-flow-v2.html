@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tus 流体公告动画 V2</title>
+  <!--
+    Direction: continuous paper membrane + kinetic typography.
+    The paper stream does not disappear; it physically becomes the announcement surface.
+    The final copy remains in motion through one shared low-frequency wave field.
+    Audio is omitted because the announcement opens automatically on a utility website.
+  -->
+  <style>
+    :root {
+      color-scheme: dark;
+      --void: #10110f;
+      --void-soft: #191b18;
+      --paper: #ebe8df;
+      --ink: #171914;
+      --acid: #c7a64b;
+      --sage: #728177;
+      --muted: #656961;
+      --expo: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e8e5dc;
+      font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    html.embed-mode,
+    html.embed-mode body {
+      background: var(--void);
+    }
+
+    html.embed-mode .site-shell {
+      display: none;
+    }
+
+    button { font: inherit; -webkit-tap-highlight-color: transparent; }
+
+    .site-shell {
+      min-height: 100dvh;
+      padding: 24px clamp(20px, 6vw, 96px);
+      color: #292923;
+      background: #e8e5dc;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(41, 41, 35, 0.16);
+    }
+
+    .site-brand,
+    .intro-word,
+    .display-title {
+      font-family: Georgia, "Songti SC", "Noto Serif SC", serif;
+    }
+
+    .site-brand { font-size: 26px; font-weight: 700; }
+    .site-meta { font-size: 12px; color: #77766d; }
+
+    .site-content {
+      width: min(900px, 100%);
+      margin: 14vh auto 0;
+      text-align: center;
+    }
+
+    .site-content small {
+      color: #8a7650;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .site-content h1 {
+      margin: 18px 0;
+      font-family: Georgia, "Songti SC", serif;
+      font-size: clamp(44px, 8vw, 94px);
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .site-content p { margin: 0 0 30px; color: #77766d; }
+
+    .replay-button {
+      min-height: 46px;
+      padding: 0 22px;
+      border: 1px solid #393932;
+      border-radius: 2px;
+      color: #f2efe7;
+      background: #292923;
+      cursor: pointer;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      overflow: hidden;
+      min-height: 100dvh;
+      color: var(--paper);
+      background: var(--void);
+      isolation: isolate;
+      opacity: 1;
+      clip-path: inset(0 0 0 0);
+      transition: opacity 420ms ease, clip-path 560ms var(--expo);
+    }
+
+    .stage.is-closed {
+      pointer-events: none;
+      opacity: 0;
+      clip-path: inset(0 0 100% 0);
+    }
+
+    .flow-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .membrane-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 15;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .grain {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      opacity: 0.15;
+      pointer-events: none;
+      mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+    }
+
+    .top-mark {
+      position: absolute;
+      top: max(28px, env(safe-area-inset-top));
+      left: clamp(22px, 5vw, 72px);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--paper);
+      pointer-events: none;
+      mix-blend-mode: difference;
+    }
+
+    .top-mark strong {
+      font-family: Georgia, serif;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    .top-mark-line { width: 34px; height: 1px; background: currentColor; }
+
+    .top-mark span:last-child {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .close-button {
+      position: fixed;
+      top: max(18px, env(safe-area-inset-top));
+      right: max(18px, env(safe-area-inset-right));
+      z-index: 80;
+      width: 50px;
+      height: 50px;
+      padding: 0;
+      border: 1px solid rgba(235, 232, 223, 0.48);
+      border-radius: 50%;
+      color: var(--paper);
+      background: rgba(16, 17, 15, 0.34);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      mix-blend-mode: difference;
+      transition: transform 260ms var(--expo), border-color 220ms ease;
+    }
+
+    .close-button::before,
+    .close-button::after {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .close-button::before { transform: rotate(45deg); }
+    .close-button::after { transform: rotate(-45deg); }
+    .close-button:hover { transform: rotate(8deg) scale(1.08); border-color: var(--acid); }
+    .close-button:focus-visible { outline: 2px solid var(--acid); outline-offset: 4px; }
+
+    .intro {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      will-change: transform, opacity, filter;
+    }
+
+    .intro-word {
+      margin: 0;
+      color: var(--paper);
+      font-size: clamp(120px, 25vw, 410px);
+      font-weight: 700;
+      line-height: 0.8;
+      white-space: nowrap;
+      letter-spacing: 0;
+      text-shadow: 0 24px 56px rgba(0, 0, 0, 0.38);
+      will-change: transform, opacity, filter;
+    }
+
+    .announcement {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      color: var(--ink);
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      will-change: opacity, transform, filter;
+    }
+
+    .announcement.is-visible { visibility: visible; }
+
+    .announcement-inner {
+      position: absolute;
+      inset: 0;
+      padding: clamp(92px, 12vh, 138px) clamp(28px, 8vw, 122px) clamp(46px, 7vh, 78px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+      grid-template-rows: 1fr auto;
+      gap: clamp(34px, 6vw, 100px);
+      align-items: center;
+      perspective: 1200px;
+    }
+
+    .hero-copy {
+      position: relative;
+      align-self: center;
+      transform-origin: left center;
+      will-change: transform;
+    }
+
+    .update-tag {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      color: #7f6935;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .update-tag::before { content: ""; width: 38px; height: 1px; background: currentColor; }
+
+    .display-title {
+      max-width: 780px;
+      margin: 0;
+      font-size: clamp(68px, 8.5vw, 138px);
+      font-weight: 500;
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .title-line {
+      display: block;
+      transform-origin: left center;
+      will-change: transform;
+    }
+
+    .title-line:last-child { color: #9b762c; font-style: italic; }
+
+    .lead {
+      width: min(600px, 94%);
+      margin: 26px 0 0;
+      color: #555a52;
+      font-size: clamp(14px, 1.2vw, 17px);
+      line-height: 1.8;
+      text-wrap: pretty;
+      will-change: transform;
+    }
+
+    .content-flow {
+      position: relative;
+      align-self: center;
+      display: grid;
+      gap: 0;
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    .flow-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 19px 0 20px;
+      border-bottom: 1px solid rgba(23, 25, 20, 0.18);
+      transform-origin: left center;
+      will-change: transform;
+    }
+
+    .flow-index {
+      padding-top: 4px;
+      color: #78847c;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+    }
+
+    .flow-copy {
+      font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: clamp(14px, 1.1vw, 17px);
+      font-weight: 600;
+      line-height: 1.55;
+    }
+
+    .compatibility {
+      margin: 17px 0 0;
+      color: #70746c;
+      font-size: 11px;
+      line-height: 1.6;
+      will-change: transform;
+    }
+
+    .action-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 28px;
+      padding-top: 6px;
+    }
+
+    .primary-action {
+      position: relative;
+      min-width: 132px;
+      min-height: 50px;
+      padding: 0 24px;
+      overflow: hidden;
+      border: 1px solid var(--ink);
+      border-radius: 1px;
+      color: var(--paper);
+      background: var(--ink);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      pointer-events: auto;
+      transition: transform 220ms var(--expo), color 220ms ease;
+    }
+
+    .primary-action::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: var(--acid);
+      transform: translateX(-104%) skewX(-18deg);
+      transition: transform 420ms var(--expo);
+    }
+
+    .primary-action:hover { color: var(--ink); transform: translateY(-2px); }
+    .primary-action:hover::before { transform: translateX(0) skewX(0); }
+    .primary-action:focus-visible { outline: 2px solid #9b762c; outline-offset: 4px; }
+
+    .signature {
+      color: #656961;
+      font-family: Georgia, "Noto Serif SC", serif;
+      font-size: 13px;
+      font-style: italic;
+      white-space: nowrap;
+      will-change: transform;
+    }
+
+    .ambient-tus {
+      position: absolute;
+      right: -0.05em;
+      bottom: -0.2em;
+      z-index: -1;
+      color: rgba(23, 25, 20, 0.045);
+      font-family: Georgia, serif;
+      font-size: clamp(180px, 34vw, 540px);
+      font-weight: 700;
+      line-height: 0.8;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    @media (max-width: 760px) {
+      .top-mark { top: max(22px, env(safe-area-inset-top)); left: 20px; }
+      .top-mark span:last-child { display: none; }
+      .close-button { width: 44px; height: 44px; }
+      .announcement-inner {
+        padding: max(88px, calc(env(safe-area-inset-top) + 72px)) 22px max(30px, env(safe-area-inset-bottom));
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        align-content: center;
+        gap: 22px;
+      }
+      .display-title { font-size: clamp(54px, 15.5vw, 78px); line-height: 0.92; }
+      .update-tag { margin-bottom: 14px; }
+      .lead { margin-top: 16px; font-size: 13px; line-height: 1.7; }
+      .flow-item { grid-template-columns: 30px 1fr; gap: 9px; padding: 10px 0 11px; }
+      .flow-copy { font-size: 13px; }
+      .compatibility { margin-top: 10px; font-size: 10px; }
+      .action-row { grid-column: 1; align-items: center; }
+      .primary-action { min-height: 46px; }
+      .ambient-tus { font-size: 68vw; right: -0.1em; bottom: 0.08em; }
+    }
+
+    @media (max-height: 680px) and (min-width: 761px) {
+      .announcement-inner { padding-top: 78px; padding-bottom: 30px; }
+      .display-title { font-size: clamp(58px, 7.4vw, 94px); }
+      .flow-item { padding: 12px 0; }
+      .lead { margin-top: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stage,
+      .close-button,
+      .primary-action,
+      .primary-action::before { transition-duration: 1ms !important; }
+      .intro { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="site-shell" aria-label="Tus 首页预览">
+    <nav class="site-nav">
+      <span class="site-brand">Tus</span>
+      <span class="site-meta">北京工业大学试卷共享平台</span>
+    </nav>
+    <section class="site-content">
+      <small>Announcement motion study · V2</small>
+      <h1>公告已经关闭</h1>
+      <p>点击下方按钮可以重新播放完整的流体公告动画。</p>
+      <button class="replay-button" id="replayButton" type="button">再次播放公告</button>
+    </section>
+  </main>
+
+  <section class="stage" id="stage" role="dialog" aria-modal="true" aria-labelledby="announcementTitle">
+    <canvas class="flow-canvas" id="flowCanvas" aria-hidden="true"></canvas>
+    <canvas class="membrane-canvas" id="membraneCanvas" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="top-mark" aria-hidden="true">
+      <strong>Tus</strong>
+      <span class="top-mark-line"></span>
+      <span>Beijing University of Technology · 07.15</span>
+    </div>
+
+    <button class="close-button" id="closeButton" type="button" aria-label="关闭公告" title="关闭公告"></button>
+
+    <div class="intro" id="intro" aria-hidden="true">
+      <h1 class="intro-word" id="introWord">Tus</h1>
+    </div>
+
+    <div class="announcement" id="announcement">
+      <div class="announcement-inner" id="announcementInner">
+        <div class="hero-copy" id="heroCopy">
+          <div class="update-tag">Product Update · 2026.07.15</div>
+          <h1 class="display-title" id="announcementTitle">
+            <span class="title-line" id="titleLineOne">登录，</span>
+            <span class="title-line" id="titleLineTwo">现已上线</span>
+          </h1>
+          <p class="lead" id="lead">一个账户连接你的每一次提交。浏览、搜索和下载依然向所有同学开放。</p>
+        </div>
+
+        <div class="content-flow" id="contentFlow">
+          <div class="flow-item">
+            <span class="flow-index">01</span>
+            <span class="flow-copy">跨设备登录，提交记录始终跟随账户</span>
+          </div>
+          <div class="flow-item">
+            <span class="flow-index">02</span>
+            <span class="flow-copy">浏览、搜索和下载试卷仍然无需登录</span>
+          </div>
+          <div class="flow-item">
+            <span class="flow-index">03</span>
+            <span class="flow-copy">上传内容进入审核队列，发布更加可靠</span>
+          </div>
+          <p class="compatibility" id="compatibility">少数浏览器的登录与下载兼容性仍在完善。</p>
+        </div>
+
+        <div class="action-row">
+          <button class="primary-action" id="primaryAction" type="button">开始使用</button>
+          <span class="signature" id="signature">— Haxim Tus</span>
+        </div>
+        <div class="ambient-tus" id="ambientTus" aria-hidden="true">Tus</div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var stage = document.getElementById("stage");
+      var canvas = document.getElementById("flowCanvas");
+      var context = canvas.getContext("2d", { alpha: false });
+      var membraneCanvas = document.getElementById("membraneCanvas");
+      var membraneContext = membraneCanvas.getContext("2d");
+      var intro = document.getElementById("intro");
+      var introWord = document.getElementById("introWord");
+      var announcement = document.getElementById("announcement");
+      var announcementInner = document.getElementById("announcementInner");
+      var heroCopy = document.getElementById("heroCopy");
+      var titleLineOne = document.getElementById("titleLineOne");
+      var titleLineTwo = document.getElementById("titleLineTwo");
+      var lead = document.getElementById("lead");
+      var contentFlow = document.getElementById("contentFlow");
+      var flowItems = Array.prototype.slice.call(document.querySelectorAll(".flow-item"));
+      var compatibility = document.getElementById("compatibility");
+      var signature = document.getElementById("signature");
+      var ambientTus = document.getElementById("ambientTus");
+      var closeButton = document.getElementById("closeButton");
+      var replayButton = document.getElementById("replayButton");
+      var primaryAction = document.getElementById("primaryAction");
+      var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var query = new URLSearchParams(window.location.search);
+      var embedded = query.get("embed") === "1";
+      var finalOnly = query.get("final") === "1";
+      var frameId = 0;
+      var startTime = 0;
+      var dpr = 1;
+      var width = 0;
+      var height = 0;
+      var pointerX = 0;
+      var pointerY = 0;
+      var targetPointerX = 0;
+      var targetPointerY = 0;
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function mix(a, b, amount) {
+        return a + (b - a) * amount;
+      }
+
+      function expoOut(t) {
+        return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+      }
+
+      function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      }
+
+      function phase(time, start, end, easing) {
+        var value = clamp((time - start) / (end - start), 0, 1);
+        return easing ? easing(value) : value;
+      }
+
+      function resizeCanvas() {
+        dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        membraneCanvas.width = Math.round(width * dpr);
+        membraneCanvas.height = Math.round(height * dpr);
+        membraneCanvas.style.width = width + "px";
+        membraneCanvas.style.height = height + "px";
+        context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        membraneContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function membranePath(progress, time) {
+        var breathe = Math.sin(time * 0.58) * 0.014 + pointerY * 0.012;
+        var sway = Math.sin(time * 0.42 + 0.8) * 0.018 + pointerX * 0.018;
+        var thinTop = 0.5 - progress * 0.006;
+        var thinBottom = 0.5 + progress * 0.006;
+        var path = new Path2D();
+
+        path.moveTo(-0.08 * width, mix(thinTop, 0.58 + breathe, progress) * height);
+        path.bezierCurveTo(
+          0.08 * width, mix(thinTop, 0.08 + breathe, progress) * height,
+          0.27 * width, mix(thinTop, 0.31 - breathe, progress) * height,
+          0.46 * width, mix(thinTop, 0.17 + sway, progress) * height
+        );
+        path.bezierCurveTo(
+          0.66 * width, mix(thinTop, 0.02 - breathe, progress) * height,
+          0.79 * width, mix(thinTop, 0.35 + sway, progress) * height,
+          1.08 * width, mix(thinTop, 0.10 - breathe, progress) * height
+        );
+        path.lineTo(1.08 * width, mix(thinBottom, 0.80 + breathe, progress) * height);
+        path.bezierCurveTo(
+          0.88 * width, mix(thinBottom, 1.02 - sway, progress) * height,
+          0.70 * width, mix(thinBottom, 0.74 + breathe, progress) * height,
+          0.48 * width, mix(thinBottom, 0.91 - sway, progress) * height
+        );
+        path.bezierCurveTo(
+          0.25 * width, mix(thinBottom, 1.05 + breathe, progress) * height,
+          0.10 * width, mix(thinBottom, 0.73 - sway, progress) * height,
+          -0.08 * width, mix(thinBottom, 0.94 + breathe, progress) * height
+        );
+        path.closePath();
+        return path;
+      }
+
+      function drawContourField(time, reveal) {
+        var count = width < 760 ? 12 : 18;
+        context.save();
+        context.lineWidth = 1;
+        context.globalAlpha = 0.24 * (1 - reveal * 0.62);
+        for (var i = 0; i < count; i += 1) {
+          var lane = (i + 0.5) / count;
+          var y = lane * height;
+          var shift = Math.sin(time * 0.5 + i * 0.67) * height * 0.045;
+          context.beginPath();
+          context.moveTo(-80, y + shift);
+          context.bezierCurveTo(
+            width * 0.20, y - height * (0.18 + lane * 0.08) + shift,
+            width * 0.40, y + height * 0.14 - shift,
+            width * 0.58, y - height * 0.06 + shift
+          );
+          context.bezierCurveTo(
+            width * 0.75, y - height * 0.18 - shift,
+            width * 0.87, y + height * 0.12 + shift,
+            width + 80, y - shift
+          );
+          context.strokeStyle = i % 4 === 0 ? "rgba(199,166,75,0.48)" : "rgba(235,232,223,0.21)";
+          context.stroke();
+        }
+        context.restore();
+      }
+
+      function catmullRomPoint(p0, p1, p2, p3, t) {
+        var t2 = t * t;
+        var t3 = t2 * t;
+        return {
+          x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+          y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3)
+        };
+      }
+
+      function getSilkAnchors(time) {
+        var narrow = width < 620;
+        var drift = Math.sin(time * 0.72) * height * (narrow ? 0.008 : 0.012);
+        var counterDrift = Math.sin(time * 0.51 + 1.4) * height * (narrow ? 0.006 : 0.010);
+        return [
+          { x: -0.24 * width, y: 0.61 * height + drift },
+          { x: 0.02 * width, y: (narrow ? 0.37 : 0.29) * height - counterDrift },
+          { x: 0.24 * width, y: (narrow ? 0.66 : 0.72) * height + drift },
+          { x: 0.49 * width, y: (narrow ? 0.45 : 0.43) * height - counterDrift },
+          { x: 0.68 * width, y: (narrow ? 0.27 : 0.18) * height + drift },
+          { x: 0.83 * width, y: (narrow ? 0.63 : 0.69) * height - counterDrift },
+          { x: 1.24 * width, y: (narrow ? 0.42 : 0.37) * height + drift }
+        ];
+      }
+
+      function silkPoint(position, time, anchors) {
+        var points = anchors || getSilkAnchors(time);
+        var scaled = clamp(position, 0, 1) * (points.length - 1);
+        var index = Math.min(points.length - 2, Math.floor(scaled));
+        var local = scaled - index;
+        var point = catmullRomPoint(
+          points[Math.max(0, index - 1)],
+          points[index],
+          points[index + 1],
+          points[Math.min(points.length - 1, index + 2)],
+          local
+        );
+        var waveScale = Math.min(width, height) * (width < 620 ? 0.008 : 0.012);
+        point.y += Math.sin(time * 1.32 + position * 10.5) * waveScale;
+        point.x += Math.sin(time * 0.84 + position * 6.2) * waveScale * 0.28;
+        return point;
+      }
+
+      function buildSilkGeometry(end, time) {
+        var anchors = getSilkAnchors(time);
+        var steps = Math.max(84, Math.ceil(end * Math.max(180, width / 4.5)));
+        var upper = [];
+        var lower = [];
+        var center = [];
+        var shortSide = Math.min(width, height);
+        var baseWidth = clamp(shortSide * 0.086, 30, 76);
+        var epsilon = 1 / Math.max(steps * 1.5, 160);
+
+        for (var i = 0; i <= steps; i += 1) {
+          var position = end * (i / steps);
+          var point = silkPoint(position, time, anchors);
+          var previous = silkPoint(Math.max(0, position - epsilon), time, anchors);
+          var next = silkPoint(Math.min(1, position + epsilon), time, anchors);
+          var dx = next.x - previous.x;
+          var dy = next.y - previous.y;
+          var length = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+          var normalX = -dy / length;
+          var normalY = dx / length;
+          var envelope = 0.74 + Math.sin(position * Math.PI) * 0.34;
+          var edgeWave = Math.sin(time * 2.05 + position * 15.5) * baseWidth * 0.075;
+          var halfWidth = baseWidth * envelope + edgeWave;
+          upper.push({ x: point.x + normalX * halfWidth, y: point.y + normalY * halfWidth });
+          lower.push({ x: point.x - normalX * halfWidth, y: point.y - normalY * halfWidth });
+          center.push({ x: point.x, y: point.y, nx: normalX, ny: normalY, halfWidth: halfWidth });
+        }
+        return { upper: upper, lower: lower, center: center, anchors: anchors, end: end };
+      }
+
+      function traceSilkBody(drawingContext, geometry) {
+        drawingContext.beginPath();
+        drawingContext.moveTo(geometry.upper[0].x, geometry.upper[0].y);
+        geometry.upper.slice(1).forEach(function (point) { drawingContext.lineTo(point.x, point.y); });
+        geometry.lower.slice().reverse().forEach(function (point) { drawingContext.lineTo(point.x, point.y); });
+        drawingContext.closePath();
+      }
+
+      function traceSilkLine(drawingContext, geometry, offsetRatio) {
+        drawingContext.beginPath();
+        geometry.center.forEach(function (point, index) {
+          var x = point.x + point.nx * point.halfWidth * offsetRatio;
+          var y = point.y + point.ny * point.halfWidth * offsetRatio;
+          if (index === 0) drawingContext.moveTo(x, y);
+          else drawingContext.lineTo(x, y);
+        });
+      }
+
+      function drawSilkSurface(drawingContext, geometry, opacity, isForeground) {
+        if (!geometry || geometry.end <= 0 || opacity <= 0) return;
+        var fill = drawingContext.createLinearGradient(0, 0, width, height);
+        if (isForeground) {
+          fill.addColorStop(0, "#d8d7d0");
+          fill.addColorStop(0.42, "#f1eee5");
+          fill.addColorStop(0.72, "#ddd9cf");
+          fill.addColorStop(1, "#f0ede4");
+        } else {
+          fill.addColorStop(0, "#8f948d");
+          fill.addColorStop(0.48, "#c6c7bf");
+          fill.addColorStop(1, "#9da19a");
+        }
+
+        drawingContext.save();
+        drawingContext.globalAlpha = opacity;
+        drawingContext.shadowColor = isForeground ? "rgba(0,0,0,0.34)" : "rgba(0,0,0,0.22)";
+        drawingContext.shadowBlur = isForeground ? 34 : 18;
+        drawingContext.fillStyle = fill;
+        traceSilkBody(drawingContext, geometry);
+        drawingContext.fill();
+        drawingContext.shadowBlur = 0;
+
+        [-0.58, 0, 0.56].forEach(function (offsetRatio, index) {
+          drawingContext.globalAlpha = opacity * (isForeground ? 0.22 : 0.12) * (index === 1 ? 1 : 0.72);
+          drawingContext.strokeStyle = index === 1 ? "#b18a3c" : "#f4f0e7";
+          drawingContext.lineWidth = index === 1 ? 1.25 : 0.8;
+          traceSilkLine(drawingContext, geometry, offsetRatio);
+          drawingContext.stroke();
+        });
+        drawingContext.restore();
+      }
+
+      function maskForegroundSilk(drawingContext, geometry, time) {
+        if (!geometry || geometry.end <= 0.30) return;
+        var left = silkPoint(0.27, time, geometry.anchors).x;
+        var fullLeft = silkPoint(0.39, time, geometry.anchors).x;
+        var fullRight = silkPoint(0.64, time, geometry.anchors).x;
+        var right = silkPoint(0.76, time, geometry.anchors).x;
+        var mask = drawingContext.createLinearGradient(left, 0, right, 0);
+        mask.addColorStop(0, "rgba(0,0,0,0)");
+        mask.addColorStop(0.22, "rgba(0,0,0,1)");
+        mask.addColorStop(0.72, "rgba(0,0,0,1)");
+        mask.addColorStop(1, "rgba(0,0,0,0)");
+        drawingContext.save();
+        drawingContext.globalCompositeOperation = "destination-in";
+        drawingContext.fillStyle = mask;
+        drawingContext.fillRect(Math.min(left, fullLeft) - 2, 0, Math.max(right, fullRight) - Math.min(left, fullLeft) + 4, height);
+        drawingContext.restore();
+      }
+
+      function drawMembrane(time, reveal, drawingContext) {
+        if (reveal <= 0) return;
+        var path = membranePath(reveal, time);
+        drawingContext.save();
+        drawingContext.globalAlpha = Math.min(1, reveal * 8);
+        drawingContext.shadowColor = "rgba(0,0,0,0.32)";
+        drawingContext.shadowBlur = 60;
+        drawingContext.fillStyle = "#ebe8df";
+        drawingContext.fill(path);
+        drawingContext.shadowBlur = 0;
+
+        drawingContext.clip(path);
+        drawingContext.globalAlpha = 0.10 * reveal;
+        drawingContext.lineWidth = 1;
+        for (var i = 0; i < 13; i += 1) {
+          var lane = i / 12;
+          var y = height * (0.18 + lane * 0.70);
+          var wobble = Math.sin(time * 0.55 + i * 0.74) * height * 0.028;
+          drawingContext.beginPath();
+          drawingContext.moveTo(-40, y + wobble);
+          drawingContext.bezierCurveTo(width * 0.30, y - height * 0.12, width * 0.57, y + height * 0.10, width + 40, y - wobble);
+          drawingContext.strokeStyle = i % 4 === 0 ? "#9b762c" : "#30352e";
+          drawingContext.stroke();
+        }
+        drawingContext.restore();
+      }
+
+      function draw(time) {
+        var silk = phase(time, 0.55, 2.45, easeInOut);
+        var silkFade = 1 - phase(time, 2.25, 3.25, expoOut);
+        var reveal = phase(time, 2.05, 3.5, easeInOut);
+        var silkGeometry = silk > 0.001 ? buildSilkGeometry(silk, time) : null;
+
+        context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        context.fillStyle = "#10110f";
+        context.fillRect(0, 0, width, height);
+        membraneContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+        membraneContext.clearRect(0, 0, width, height);
+        drawContourField(time, reveal);
+        drawSilkSurface(context, silkGeometry, silkFade, false);
+        if (silk > 0.30) {
+          drawSilkSurface(membraneContext, silkGeometry, silkFade, true);
+          maskForegroundSilk(membraneContext, silkGeometry, time);
+        }
+        drawMembrane(time, reveal, membraneContext);
+      }
+
+      function renderDom(time) {
+        var wordIn = phase(time, 0, 0.85, expoOut);
+        var contentIn = phase(time, 2.8, 4.0, expoOut);
+        var detailIn = phase(time, 3.5, 4.85, expoOut);
+        var ambient = Math.max(0, time - 4.85);
+
+        intro.style.opacity = String(wordIn);
+        intro.style.filter = "blur(" + mix(16, 0, wordIn).toFixed(2) + "px)";
+        introWord.style.transform = "translate3d(" + (pointerX * 10).toFixed(2) + "px," + mix(18, 0, wordIn).toFixed(2) + "px,0)";
+        announcement.classList.toggle("is-visible", contentIn > 0.01);
+        announcement.style.opacity = String(contentIn);
+        announcement.style.filter = "blur(" + mix(14, 0, contentIn).toFixed(2) + "px)";
+        announcement.style.clipPath = "inset(" + mix(49.5, 0, contentIn).toFixed(2) + "% 0 " + mix(49.5, 0, contentIn).toFixed(2) + "% 0)";
+        announcement.style.pointerEvents = contentIn > 0.98 ? "auto" : "none";
+
+        var breatheX = Math.sin(ambient * 0.43) * 7 + pointerX * 10;
+        var breatheY = Math.sin(ambient * 0.56 + 0.9) * 6 + pointerY * 8;
+        announcementInner.style.transform = "translate3d(" + breatheX.toFixed(2) + "px," + breatheY.toFixed(2) + "px,0)";
+        heroCopy.style.transform = "translate3d(" + (Math.sin(ambient * 0.62) * 5 - pointerX * 6).toFixed(2) + "px," + (Math.sin(ambient * 0.48) * 4).toFixed(2) + "px,0) rotateZ(" + (Math.sin(ambient * 0.37) * 0.22).toFixed(3) + "deg)";
+        titleLineOne.style.transform = "translateX(" + mix(-70, Math.sin(ambient * 0.51) * 5, contentIn).toFixed(2) + "px) skewX(" + mix(-8, 0, contentIn).toFixed(2) + "deg)";
+        titleLineTwo.style.transform = "translateX(" + mix(90, Math.sin(ambient * 0.46 + 1.2) * 9, contentIn).toFixed(2) + "px) skewX(" + mix(10, 0, contentIn).toFixed(2) + "deg)";
+        lead.style.transform = "translateX(" + mix(-30, Math.sin(ambient * 0.5 + 2) * 4, contentIn).toFixed(2) + "px)";
+        contentFlow.style.opacity = String(detailIn);
+        contentFlow.style.transform = "translate3d(" + mix(70, Math.sin(ambient * 0.45 + 1.4) * 7 + pointerX * 5, detailIn).toFixed(2) + "px," + mix(24, Math.sin(ambient * 0.5) * 5, detailIn).toFixed(2) + "px,0) rotateZ(" + (Math.sin(ambient * 0.34 + 1) * -0.18).toFixed(3) + "deg)";
+
+        flowItems.forEach(function (item, index) {
+          var stagger = phase(time, 3.6 + index * 0.12, 4.4 + index * 0.12, expoOut);
+          var wave = Math.sin(ambient * 0.62 + index * 0.9) * (4 + index * 1.5);
+          item.style.opacity = String(stagger);
+          item.style.transform = "translateX(" + mix(48, wave, stagger).toFixed(2) + "px) rotateZ(" + (Math.sin(ambient * 0.5 + index) * 0.16).toFixed(3) + "deg)";
+        });
+
+        compatibility.style.opacity = String(detailIn);
+        compatibility.style.transform = "translateX(" + (Math.sin(ambient * 0.47 + 2.2) * 4).toFixed(2) + "px)";
+        signature.style.transform = "translate3d(" + (Math.sin(ambient * 0.38 + 0.7) * 5).toFixed(2) + "px," + (Math.sin(ambient * 0.52) * 3).toFixed(2) + "px,0)";
+        ambientTus.style.transform = "translate3d(" + (Math.sin(ambient * 0.29) * 18).toFixed(2) + "px," + (Math.sin(ambient * 0.41 + 1.2) * 12).toFixed(2) + "px,0) rotateZ(" + (Math.sin(ambient * 0.21) * 0.6).toFixed(3) + "deg)";
+
+        window.__animationTime = time;
+      }
+
+      function render(time) {
+        pointerX += (targetPointerX - pointerX) * 0.055;
+        pointerY += (targetPointerY - pointerY) * 0.055;
+        draw(time);
+        renderDom(time);
+      }
+
+      function tick(now) {
+        if (!startTime) {
+          startTime = now;
+          render(0);
+          window.__ready = true;
+        }
+        var time = (now - startTime) / 1000;
+        render(time);
+        if (!stage.classList.contains("is-closed")) frameId = requestAnimationFrame(tick);
+      }
+
+      function play() {
+        cancelAnimationFrame(frameId);
+        stage.classList.remove("is-closed");
+        stage.setAttribute("aria-hidden", "false");
+        startTime = 0;
+        pointerX = 0;
+        pointerY = 0;
+        if (reducedMotion) {
+          render(6.2);
+          window.__ready = true;
+        } else {
+          frameId = requestAnimationFrame(tick);
+        }
+        closeButton.focus({ preventScroll: true });
+      }
+
+      function close() {
+        cancelAnimationFrame(frameId);
+        stage.classList.add("is-closed");
+        stage.setAttribute("aria-hidden", "true");
+        if (embedded && window.parent !== window) {
+          window.parent.postMessage({ type: "tus-announcement-close" }, window.location.origin);
+        }
+        replayButton.focus({ preventScroll: true });
+      }
+
+      window.addEventListener("pointermove", function (event) {
+        targetPointerX = (event.clientX / Math.max(1, width) - 0.5) * 2;
+        targetPointerY = (event.clientY / Math.max(1, height) - 0.5) * 2;
+      }, { passive: true });
+
+      window.addEventListener("resize", resizeCanvas);
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) cancelAnimationFrame(frameId);
+        else if (!stage.classList.contains("is-closed") && !reducedMotion) {
+          startTime = performance.now() - (window.__animationTime || 0) * 1000;
+          frameId = requestAnimationFrame(tick);
+        }
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !stage.classList.contains("is-closed")) close();
+      });
+      closeButton.addEventListener("click", close);
+      primaryAction.addEventListener("click", close);
+      replayButton.addEventListener("click", play);
+
+      window.__seek = function (time) {
+        cancelAnimationFrame(frameId);
+        stage.classList.remove("is-closed");
+        render(Math.max(0, Number(time) || 0));
+      };
+      window.__playAnnouncement = play;
+      window.__closeAnnouncement = close;
+
+      if (embedded) document.documentElement.classList.add("embed-mode");
+      resizeCanvas();
+      document.fonts.ready.then(function () {
+        if (finalOnly) {
+          stage.classList.remove("is-closed");
+          stage.setAttribute("aria-hidden", "false");
+          render(6.2);
+          window.__ready = true;
+          closeButton.focus({ preventScroll: true });
+        } else {
+          play();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
