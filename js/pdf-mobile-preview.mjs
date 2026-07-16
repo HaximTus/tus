@@ -9,9 +9,9 @@
         });
     }
 
-    window.TusMobilePdfReady = loadScript('js/pdf.compat.min.js?v=1').then(function() {
+    window.TusMobilePdfReady = loadScript('js/pdf.compat.min.js?v=2').then(function() {
         if (!window.pdfjsLib) throw new Error('PDF.js did not initialize');
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.compat.min.js?v=1';
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.compat.min.js?v=2';
         return window.pdfjsLib;
     });
 
