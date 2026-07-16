@@ -44,6 +44,7 @@ const FILES_TO_UPLOAD = [
     'admin.html',
     'preview.html',
     'download-worker.js',
+    'js/pdf-runtime-prefetch.js',
     'design-demos/announcement-zaha-flow-v2.html',
     'css/tailwind.css',
     'css/style.css',
