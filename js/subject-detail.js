@@ -378,16 +378,20 @@ function preloadPdfs(papers) {
         var p = papers[i];
         var ext = (p.file_name || p.file_path || '').split('.').pop().toLowerCase();
         if (ext !== 'pdf') continue;
-        // 限制最多预取 3 个，页面有几十个试卷时不影响网速
+        // 限制最多预取 3 个，且延迟到空闲时执行，避免和用户打开的预览争抢带宽。
         if (++count > 3) break;
         var fileUrl = getSameOriginPaperUrl(p.file_path || '');
         var preloadUrl = getAbsoluteUrl(fileUrl);
-        fetch(preloadUrl, { cache: 'force-cache' })
-            .then(function(response) {
-                if (!response.ok) throw new Error('PDF preload failed: ' + response.status);
-                return response.arrayBuffer();
-            })
-            .catch(function() {});
+        var load = function() {
+            fetch(preloadUrl, { cache: 'force-cache', priority: 'low' })
+                .then(function(response) {
+                    if (!response.ok) throw new Error('PDF preload failed: ' + response.status);
+                    return response.arrayBuffer();
+                })
+                .catch(function() {});
+        };
+        if ('requestIdleCallback' in window) window.requestIdleCallback(load, { timeout: 5000 });
+        else window.setTimeout(load, 1800 + i * 500);
     }
 }
 
@@ -776,38 +780,41 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
         if (state.rendered[pageNumber] || state.rendering[pageNumber]) return;
         if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
         state.rendering[pageNumber] = true;
-        var page = await pdf.getPage(pageNumber);
-        var baseViewport = page.getViewport({ scale: 1 });
-        var availableWidth = Math.max(1, Math.min(container.clientWidth - 12, 820));
-        var outputScale = Math.min(window.devicePixelRatio || 1, 1.5);
-        var viewport = page.getViewport({ scale: availableWidth / baseViewport.width });
-        var canvas = document.createElement('canvas');
-        canvas.className = 'pdf-page';
-        canvas.width = Math.floor(viewport.width * outputScale);
-        canvas.height = Math.floor(viewport.height * outputScale);
-        canvas.style.width = Math.floor(viewport.width) + 'px';
-        canvas.style.height = Math.floor(viewport.height) + 'px';
-        await page.render({
-            canvasContext: canvas.getContext('2d'),
-            viewport: viewport,
-            transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0]
-        }).promise;
-        if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
-        shell.innerHTML = '';
-        shell.appendChild(canvas);
-        shell.classList.add('is-rendered');
-        state.rendered[pageNumber] = true;
-        state.rendering[pageNumber] = false;
-        if (state.observer) state.observer.unobserve(shell);
-        if (pageNumber === 1) {
-            updatePreviewProgress(overlay, 100, '预览准备好了');
-            setTimeout(function() {
-                if (generation === card._pdfRenderGeneration && overlay.isConnected) previewLoading.style.display = 'none';
-            }, 180);
-            if (card._previewTimeoutId) {
-                clearTimeout(card._previewTimeoutId);
-                card._previewTimeoutId = null;
+        try {
+            var page = await pdf.getPage(pageNumber);
+            var baseViewport = page.getViewport({ scale: 1 });
+            var availableWidth = Math.max(1, Math.min(container.clientWidth - 12, 820));
+            var outputScale = Math.min(window.devicePixelRatio || 1, 1.5);
+            var viewport = page.getViewport({ scale: availableWidth / baseViewport.width });
+            var canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page';
+            canvas.width = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            canvas.style.width = Math.floor(viewport.width) + 'px';
+            canvas.style.height = Math.floor(viewport.height) + 'px';
+            await page.render({
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport,
+                transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0]
+            }).promise;
+            if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+            shell.innerHTML = '';
+            shell.appendChild(canvas);
+            shell.classList.add('is-rendered');
+            state.rendered[pageNumber] = true;
+            if (state.observer) state.observer.unobserve(shell);
+            if (pageNumber === 1) {
+                updatePreviewProgress(overlay, 100, '预览准备好了');
+                setTimeout(function() {
+                    if (generation === card._pdfRenderGeneration && overlay.isConnected) previewLoading.style.display = 'none';
+                }, 180);
+                if (card._previewTimeoutId) {
+                    clearTimeout(card._previewTimeoutId);
+                    card._previewTimeoutId = null;
+                }
             }
+        } finally {
+            state.rendering[pageNumber] = false;
         }
     }
 
@@ -838,7 +845,7 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
                     });
                 }
             }
-        }, { root: previewContainer, rootMargin: '600px 0px' });
+        }, { root: previewContainer, rootMargin: '1200px 0px' });
     }
 
     for (var pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
@@ -847,6 +854,20 @@ async function renderMobilePdf(pdfjsLib, overlay, previewUrl, generation) {
         if (state.observer) state.observer.observe(shell);
         else await renderPage(pageNumber, shell);
     }
+
+    // 第一页完成后，后台优先准备接下来两页，降低快速向下翻页时的等待。
+    function warmNextPages() {
+        if (generation !== card._pdfRenderGeneration || !overlay.isConnected) return;
+        var priority = Math.min(pdf.numPages, 3);
+        for (var warmPage = 2; warmPage <= priority; warmPage++) {
+            var warmShell = container.querySelector('[data-page-number="' + warmPage + '"]');
+            if (warmShell) renderPage(warmPage, warmShell).catch(function(error) {
+                console.warn('PDF background render failed:', error);
+            });
+        }
+    }
+    if ('requestIdleCallback' in window) window.requestIdleCallback(warmNextPages, { timeout: 900 });
+    else window.setTimeout(warmNextPages, 120);
 }
 
 function closePaperDetail(overlay) {
