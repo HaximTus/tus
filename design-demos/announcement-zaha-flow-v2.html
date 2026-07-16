@@ -31,6 +31,10 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
       background: #e8e5dc;
       font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
       letter-spacing: 0;
@@ -112,6 +116,10 @@
       color: var(--paper);
       background: var(--void);
       isolation: isolate;
+      overscroll-behavior: none;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
       opacity: 1;
       clip-path: inset(0 0 0 0);
       transition: opacity 420ms ease, clip-path 560ms var(--expo);
@@ -927,7 +935,6 @@
         } else {
           frameId = requestAnimationFrame(tick);
         }
-        closeButton.focus({ preventScroll: true });
       }
 
       function close() {
@@ -959,6 +966,12 @@
       closeButton.addEventListener("click", close);
       primaryAction.addEventListener("click", close);
       replayButton.addEventListener("click", play);
+      window.addEventListener("contextmenu", function (event) {
+        event.preventDefault();
+      }, { passive: false });
+      window.addEventListener("touchmove", function (event) {
+        event.preventDefault();
+      }, { passive: false });
 
       window.__seek = function (time) {
         cancelAnimationFrame(frameId);
@@ -976,7 +989,6 @@
           stage.setAttribute("aria-hidden", "false");
           render(6.2);
           window.__ready = true;
-          closeButton.focus({ preventScroll: true });
         } else {
           play();
         }
