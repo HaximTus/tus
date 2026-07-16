@@ -212,6 +212,16 @@
     .close-button::after { transform: rotate(-45deg); }
     .close-button:hover { transform: rotate(8deg) scale(1.08); border-color: var(--acid); }
     .close-button:focus-visible { outline: 2px solid var(--acid); outline-offset: 4px; }
+    @media (hover: none) and (pointer: coarse) {
+      .close-button,
+      .close-button:focus,
+      .close-button:focus-visible,
+      .close-button:active {
+        outline: none;
+        box-shadow: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
 
     .intro {
       position: absolute;
