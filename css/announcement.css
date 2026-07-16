@@ -277,6 +277,17 @@
     outline-offset: 3px;
 }
 
+@media (hover: none) and (pointer: coarse) {
+    .announcement-close,
+    .announcement-close:focus,
+    .announcement-close:focus-visible,
+    .announcement-close:active {
+        outline: none;
+        box-shadow: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
 /* 收卷退出：卷轴回到中轴，遮罩随后淡出。 */
 .announcement-overlay.is-closing {
     animation: overlay-fade-out 620ms ease both;
@@ -420,11 +431,9 @@ html.dark .announcement-stamp {
 }
 
 .announcement-motion-overlay.is-closing {
-    animation: motion-overlay-fade-out 460ms ease both;
-}
-
-@keyframes motion-overlay-fade-out {
-    to { opacity: 0; }
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ========== 平板 / 手机 ========== */
