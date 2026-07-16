@@ -1,117 +1,99 @@
 /**
  * Tus - 公告系统
- * 首次进入显示公告遮罩，之后可通过导航栏「公告」入口再次打开
+ * 首次进入播放全屏公告动画；之后从导航栏打开最终动态公告。
  */
 (function () {
+  var SEEN_KEY = 'tus_announcement_seen_20260716_motion_v1';
+  var DEMO_PATH = 'design-demos/announcement-zaha-flow-v2.html';
 
-  /* ========== 公告内容 ========== */
-  var HEADER_HTML =
-    '<div class="announcement-date">二〇二六年七月十五日</div>' +
-    '<div class="announcement-header-row">' +
-      '<div class="announcement-title" id="announcementTitle">公告</div>' +
-      '<div class="announcement-seal">A</div>' +
-    '</div>';
-
-  var BODY_HTML =
-    '<p>致同学们：</p>' +
-    '<p>Tus 北京工业大学试卷共享平台现已完成基础功能建设，当前继续征集各课程的期中、期末及历年试卷资料。</p>' +
-    '<p><strong>本次更新：登录系统正式上线。</strong>用户可以注册账户并在不同设备上登录，账户用于识别试卷提交者并保护提交流程。浏览、搜索及下载已收录试卷无需登录；上传新试卷时需要先登录。</p>' +
-    '<p><strong>试卷访问优化。</strong>试卷预览与下载现已统一从 haximtus.cn 同源获取，不再依赖外部 CDN、GitHub Raw 或未备案 API；下载按钮已加强跨浏览器兼容，下载时会停留在当前页面。预览框同步适配桌面宽屏、手机全屏和安全区域，PDF 优先显示第一页，其余页面在滚动接近时按需加载。</p>' +
-    '<p>目前仍有部分浏览器（夸克浏览器等）不支持下载和登录。该问题将在完成icp备案后进行修复</p>' +
-    '<p>如持有尚未收录的试卷，欢迎登录后提交。提交内容将进入审核队列，经维护者审核后发布，以保证资料的准确性与可用性。</p>' +
-    '<p>感谢各位同学对试卷共享平台建设的支持。</p>' +
-    '<div class="announcement-signature-wrapper">' +
-      '<span class="announcement-signature">— Haxim Tus</span>' +
-      '<span class="announcement-stamp">H</span>' +
-    '</div>';
-
-  /* ========== 存储键 ========== */
-  var SEEN_KEY = 'tus_announcement_seen_20260715_download_compat';
-
-  /* ========== 构建 DOM ========== */
-  function buildOverlay() {
+  function buildOverlay(animate) {
     var overlay = document.createElement('div');
-    overlay.className = 'announcement-overlay';
+    var mode = animate ? 'embed=1' : 'embed=1&final=1';
+    var frame = document.createElement('iframe');
+
+    overlay.className = 'announcement-overlay announcement-motion-overlay';
     overlay.id = 'announcementOverlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Tus 公告');
 
-    overlay.innerHTML =
-      '<div class="announcement-scroll" role="dialog" aria-modal="true" aria-labelledby="announcementTitle" tabindex="-1">' +
-        '<div class="announcement-rod announcement-rod-top" aria-hidden="true"></div>' +
-        '<button class="announcement-close" id="announcementClose" type="button" aria-label="关闭公告" title="关闭公告">&times;</button>' +
-        '<div class="announcement-card">' +
-          '<div class="announcement-header">' + HEADER_HTML + '</div>' +
-          '<div class="announcement-body">' + BODY_HTML + '</div>' +
-        '</div>' +
-        '<div class="announcement-rod announcement-rod-bottom" aria-hidden="true"></div>' +
-      '</div>';
+    frame.className = 'announcement-motion-frame';
+    frame.src = DEMO_PATH + '?' + mode;
+    frame.title = 'Tus 公告';
+    frame.setAttribute('allowtransparency', 'true');
 
+    overlay.appendChild(frame);
     overlay.addEventListener('click', function (event) {
       if (event.target === overlay) closeOverlay(overlay);
     });
-
-    var btn = overlay.querySelector('#announcementClose');
-    btn.addEventListener('click', function () {
-      closeOverlay(overlay);
-    });
-
+    overlay._frame = frame;
     return overlay;
   }
 
   function closeOverlay(overlay) {
-    if (overlay.classList.contains('is-closing')) return;
+    if (!overlay || overlay.classList.contains('is-closing')) return;
     overlay.classList.add('is-closing');
     if (overlay._onAnnouncementKeydown) {
       document.removeEventListener('keydown', overlay._onAnnouncementKeydown);
     }
-    setTimeout(function () {
+    window.setTimeout(function () {
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    }, 640);
+    }, 460);
   }
 
-  /* ========== 显示公告 ========== */
-  window.showAnnouncement = function () {
+  window.showAnnouncement = function (options) {
     if (document.getElementById('announcementOverlay')) return;
-    var overlay = buildOverlay();
+    var animate = !options || options.animate !== false;
+    var overlay = buildOverlay(animate);
     document.body.appendChild(overlay);
+
     overlay._onAnnouncementKeydown = function (event) {
       if (event.key === 'Escape') closeOverlay(overlay);
     };
     document.addEventListener('keydown', overlay._onAnnouncementKeydown);
-    overlay.querySelector('.announcement-scroll').focus({ preventScroll: true });
+    overlay._frame.addEventListener('load', function () {
+      overlay.classList.add('is-loaded');
+    }, { once: true });
   };
 
-  /* ========== 初始化 ========== */
+  window.addEventListener('message', function (event) {
+    if (event.origin !== window.location.origin) return;
+    if (!event.data || event.data.type !== 'tus-announcement-close') return;
+    var overlay = document.getElementById('announcementOverlay');
+    if (overlay && overlay._frame && event.source === overlay._frame.contentWindow) {
+      closeOverlay(overlay);
+    }
+  });
+
   function init() {
-    // 导航栏「公告」点击
     var trigger = document.getElementById('navAnnouncement');
     if (trigger) {
       trigger.addEventListener('click', function () {
-        window.showAnnouncement();
+        window.showAnnouncement({ animate: false });
       });
     }
 
-    // 登录等任务页面可保留公告入口，但不自动打断当前流程。
     if (document.body && document.body.getAttribute('data-announcement-auto') === 'false') return;
-
-    // 首次访问 → 展示公告
     if (localStorage.getItem(SEEN_KEY)) return;
 
-    // 用定时器确保 DOM 已就绪，不依赖 load 事件（避免 CDN 加载慢导致公告不出）
     function tryShow() {
-      if (!document.body) { setTimeout(tryShow, 50); return; }
-      window.showAnnouncement();
+      if (!document.body) {
+        window.setTimeout(tryShow, 50);
+        return;
+      }
+      window.showAnnouncement({ animate: true });
       localStorage.setItem(SEEN_KEY, '1');
     }
 
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       tryShow();
     } else {
-      document.addEventListener('DOMContentLoaded', tryShow);
+      document.addEventListener('DOMContentLoaded', tryShow, { once: true });
     }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init, { once: true });
   } else {
     init();
   }
